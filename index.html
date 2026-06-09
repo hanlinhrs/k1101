@@ -418,7 +418,7 @@
     font-size: 13px;
     font-weight: 700;
     display: flex;
-    align-items: center; justify-content: center;
+    align-items: center justify-content: center;
     padding: 0 12px;
     transition: all 0.2s ease;
   }
@@ -599,7 +599,7 @@
 // ════════════════════════════════════════════════════════════
 //  ⚙️  設定區 — 請填入您的 Google Apps Script (GAS) 部署網址
 // ════════════════════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz3jS4meTG_xDAbrPI5fh_uqEBFEFlwq3fagd4ziqdJ4C_5Anb_cixm8TqoEnGu50Rjng/exec";
 // ════════════════════════════════════════════════════════════
 
 // 偵測是否為示範模式（當使用者尚未填寫真正的 GAS ID 時）
@@ -678,7 +678,7 @@ function setupNoticeBanner() {
       <strong>🔗 已連接雲端試算表：</strong>
       <span>系統已對接 Google 試算表，所有的資料將會即時讀寫與同步。</span>
     `;
-    // 若連接成功，也可以選擇 5 秒後自動隱藏此通知
+    // 連接成功，5 秒後自動隱藏此通知
     setTimeout(() => {
       noticeEl.style.opacity = "0";
       setTimeout(() => noticeEl.style.display = "none", 300);
