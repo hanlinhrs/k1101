@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>移工工作狀況紀錄系統</title>
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface2: #F1F5F9;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --text2: #475569;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-light: #EFF6FF;
+    --danger: #EF4444;
+    --success: #10B981;
+    --success-bg: #ECFDF5;
+    --warn: #F59E0B;
+    --warn-bg: #FFFBEB;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.03);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  [data-theme="dark"] {
+    --bg: #0B0F19;
+    --surface: #151F32;
+    --surface2: #1E293B;
+    --border: #334155;
+    --text: #F8FAFC;
+    --text2: #94A3B8;
+    --accent: #3B82F6;
+    --accent-hover: #60A5FA;
+    --accent-light: #1E293B;
+    --success-bg: #064E3B;
+    --warn-bg: #78350F;
+    --shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-icon {
+    width: 42px; height: 42px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+  }
+  .header-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+  .theme-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .theme-btn:hover { 
+    background: var(--surface2); 
+    transform: rotate(15deg);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-header-icon {
+    font-size: 22px;
+  }
+  .card-header-text h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .card-header-text p {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+  .card-body { padding: 24px; }
+
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  label .required {
+    color: var(--danger);
+    font-size: 14px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
+    background: var(--surface);
+  }
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+    cursor: pointer;
+  }
+
+  /* ── SUBMIT BTN ── */
+  .btn-submit {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+    transition: all 0.2s ease;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  }
+  .btn-submit:hover:not(:disabled) { 
+    background: var(--accent-hover); 
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+  }
+  .btn-submit:active:not(:disabled) { transform: scale(0.99); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #0F172A;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+    opacity: 0;
+    white-space: nowrap;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toast.success { background: var(--success); }
+  #toast.error { background: var(--danger); }
+
+  /* ── RECORDS ── */
+  .records-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-wrap input {
+    padding-left: 44px;
+    font-size: 14px;
+    background: var(--surface2);
+  }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text2);
+    pointer-events: none;
+    font-size: 16px;
+  }
+  .refresh-btn {
+    padding: 11px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .refresh-btn:hover { background: var(--surface2); border-color: var(--text2); }
+  .refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Records list */
+  #records-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .record-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px 18px;
+    align-items: start;
+    transition: all 0.2s ease;
+    cursor: default;
+  }
+  .record-item:hover { 
+    background: var(--surface2); 
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .record-date-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.4;
+    border: 1px solid rgba(37,99,235,0.1);
+  }
+  .record-date-badge .date-day { font-size: 20px; display: block; }
+  .record-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .record-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .record-recorder {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .record-desc {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    background: rgba(0, 0, 0, 0.01);
+    border-radius: 6px;
+  }
+  .record-note {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    display: inline-block;
+  }
+  .record-meta {
+    font-size: 12px;
+    color: var(--text2);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Empty / loading states */
+  .state-box {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text2);
+  }
+  .state-box .state-icon { font-size: 48px; margin-bottom: 12px; }
+  .state-box p { font-size: 15px; font-weight: 500; }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .page-btn {
+    min-width: 38px; height: 38px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center; justify-content: center;
+    padding: 0 12px;
+    transition: all 0.2s ease;
+  }
+  .page-btn:hover:not(:disabled) { background: var(--surface2); border-color: var(--text2); }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+  .page-info {
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 600;
+  }
+
+  /* ── SETUP & DEMO NOTICE ── */
+  .setup-notice {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.3s;
+  }
+  .setup-notice.warning {
+    background: var(--warn-bg);
+    border: 1.5px solid var(--warn);
+    color: var(--warn);
+  }
+  .setup-notice.demo {
+    background: var(--success-bg);
+    border: 1.5px solid var(--success);
+    color: var(--success);
+  }
+  .setup-notice strong { font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .setup-notice code {
+    background: rgba(0,0,0,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  [data-theme="dark"] .setup-notice code {
+    background: rgba(255,255,255,0.1);
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 480px) {
+    header { padding: 0 16px; height: 60px; }
+    .header-icon { width: 36px; height: 36px; font-size: 18px; }
+    .header-title { font-size: 15px; }
+    main { padding: 16px 12px 40px; gap: 16px; }
+    .card-header { padding: 16px 20px 12px; }
+    .card-body { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; gap: 14px; }
+    .form-group.full { grid-column: 1; }
+    .record-item {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      padding: 14px;
+      gap: 10px;
+    }
+    .record-date-badge {
+      grid-column: 1;
+      grid-row: 1;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 10px;
+    }
+    .record-date-badge .date-day { font-size: 14px; display: inline; }
+    .record-meta { grid-column: 2; grid-row: 1; font-size: 11px; align-self: center; }
+    .record-main { grid-column: 1 / -1; grid-row: 2; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-icon">👷</div>
+    <div>
+      <div class="header-title">移工工作狀況紀錄</div>
+      <div class="header-sub">Worker Status Tracker</div>
+    </div>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()" title="切換深淺色模式" id="themeBtn">🌙</button>
+</header>
+
+<main>
+
+  <!-- Setup/Demo Notice -->
+  <div class="setup-notice" id="setupNotice">
+    <!-- Will be dynamically populated by JS -->
+  </div>
+
+  <!-- Form Card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">📝</span>
+      <div class="card-header-text">
+        <h2>新增狀況紀錄</h2>
+        <p>填寫完畢後點擊送出，資料將同步更新</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>填寫人姓名 <span class="required">*</span></label>
+          <input type="text" id="fRecorder" placeholder="請輸入您的姓名" required>
+        </div>
+        <div class="form-group">
+          <label>填寫日期 <span class="required">*</span></label>
+          <input type="date" id="fDate" required>
+        </div>
+        <div class="form-group">
+          <label>員工姓名 <span class="required">*</span></label>
+          <select id="fName" required>
+            <option value="">— 請選擇員工 —</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>狀況說明 <span class="required">*</span></label>
+          <textarea id="fDesc" placeholder="請描述工作狀況，例如：請假、遲到、工作表現優良、工作異常、違規行為等…" rows="3"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>備註</label>
+          <textarea id="fNote" placeholder="補充說明（選填）" rows="2"></textarea>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="submitRecord()" id="submitBtn">
+        <span>📤</span> 送出紀錄
+      </button>
+    </div>
+  </div>
+
+  <!-- Records Card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">📋</span>
+      <div class="card-header-text">
+        <h2>歷史紀錄</h2>
+        <p>即時同步的紀錄列表</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="records-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="搜尋填寫人、員工姓名、狀況說明或備註…" oninput="filterRecords()">
+        </div>
+        <button class="refresh-btn" onclick="loadRecords()" id="refreshBtn">
+          <span class="spin-icon">🔄</span> 重新整理
+        </button>
+      </div>
+
+      <div id="records-list">
+        <div class="state-box">
+          <div class="state-icon">⏳</div>
+          <p>資料載入中…</p>
+        </div>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  ⚙️  設定區 — 請填入您的 Google Apps Script (GAS) 部署網址
+// ════════════════════════════════════════════════════════════
+const GAS_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+// ════════════════════════════════════════════════════════════
+
+// 偵測是否為示範模式（當使用者尚未填寫真正的 GAS ID 時）
+const isDemoMode = GAS_URL.includes("YOUR_SCRIPT_ID");
+
+const RECORDS_PER_PAGE = 10;
+let allRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
+
+// ── 本地示範資料庫 (Demo Mode Database) ──
+const DEMO_EMPLOYEES = [
+  "王小明 (阿明)", 
+  "阮氏香 (阿香)", 
+  "阿古斯 (Agus)", 
+  "陳美玲 (Siti)", 
+  "蘇帝諾 (Sutino)",
+  "裴文英 (Anh)"
+];
+
+const DEFAULT_DEMO_RECORDS = [
+  { date: todayStr(), recorder: "林主任", name: "阮氏香 (阿香)", desc: "今日工作效率優良，提早完成產線備料工作。", note: "領班給予口頭嘉獎" },
+  { date: todayStr(-1), recorder: "張組長", name: "阿古斯 (Agus)", desc: "上午因身體不舒服（感冒），請病假半天。下午已回崗位。", note: "已出示診所就醫證明" },
+  { date: todayStr(-2), recorder: "陳課長", name: "王小明 (阿明)", desc: "因交通堵塞遲到15分鐘，已口頭提醒注意安全並提早出門。", note: "" },
+  { date: todayStr(-3), recorder: "林主任", name: "蘇帝諾 (Sutino)", desc: "積極協助新進同仁適應產線操作環境，表現積極負責。", note: "推薦納入優秀員工評估" },
+  { date: todayStr(-5), recorder: "張組長", name: "陳美玲 (Siti)", desc: "操作機台時未依規定佩戴防護手套，已現場予以糾正並要求改進。", note: "宣導安全防護規範" }
+];
+
+// ── 初始化 ──
+window.addEventListener("DOMContentLoaded", () => {
+  // 設定預設日期為今天
+  document.getElementById("fDate").value = todayStr();
+  
+  // 載入主題
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme) {
+    setTheme(savedTheme);
+  } else {
+    // 預設跟隨系統主題
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setTheme(prefersDark ? "dark" : "light");
+  }
+
+  // 設定提示橫幅
+  setupNoticeBanner();
+
+  // 載入員工名單與歷史紀錄
+  loadEmployees();
+  loadRecords();
+});
+
+function todayStr(offsetDays = 0) {
+  const d = new Date();
+  if (offsetDays !== 0) {
+    d.setDate(d.getDate() + offsetDays);
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// ── 提示橫幅設定 ──
+function setupNoticeBanner() {
+  const noticeEl = document.getElementById("setupNotice");
+  if (isDemoMode) {
+    noticeEl.className = "setup-notice demo";
+    noticeEl.innerHTML = `
+      <strong>💡 目前處於「本地示範模式」：</strong>
+      <span>您可以直接在預覽測試所有功能！新增、搜尋與分頁皆可正常運作（資料將儲存於您目前的瀏覽器暫存中）。</span>
+      <span>正式上線時，請將本網頁程式碼中的 <code>GAS_URL</code> 修改為您的 Google Apps Script 部署網址。</span>
+    `;
+  } else {
+    noticeEl.className = "setup-notice warning";
+    noticeEl.innerHTML = `
+      <strong>🔗 已連接雲端試算表：</strong>
+      <span>系統已對接 Google 試算表，所有的資料將會即時讀寫與同步。</span>
+    `;
+    // 若連接成功，也可以選擇 5 秒後自動隱藏此通知
+    setTimeout(() => {
+      noticeEl.style.opacity = "0";
+      setTimeout(() => noticeEl.style.display = "none", 300);
+    }, 5000);
+  }
+}
+
+// ── 主題切換 ──
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  setTheme(current === "dark" ? "light" : "dark");
+}
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
+  localStorage.setItem("theme", t);
+}
+
+// ── 提示訊息 Toast ──
+function showToast(msg, type = "success") {
+  const el = document.getElementById("toast");
+  el.textContent = (type === "success" ? "✅ " : "❌ ") + msg;
+  el.className = "show " + type;
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.className = ""; }, 3000);
+}
+
+// ── 載入員工名單 ──
+async function loadEmployees() {
+  const sel = document.getElementById("fName");
+  
+  if (isDemoMode) {
+    // 示範模式：使用本機寫死的名單
+    populateEmployeeSelect(DEMO_EMPLOYEES);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${GAS_URL}?action=getEmployees`);
+    const data = await res.json();
+    if (data.employees && data.employees.length) {
+      populateEmployeeSelect(data.employees);
+    } else {
+      populateEmployeeSelect(DEMO_EMPLOYEES);
+    }
+  } catch (e) {
+    console.warn("無法從雲端載入員工名單，改用預設名單", e);
+    populateEmployeeSelect(DEMO_EMPLOYEES);
+  }
+}
+
+function populateEmployeeSelect(employees) {
+  const sel = document.getElementById("fName");
+  sel.innerHTML = '<option value="">— 請選擇員工 —</option>';
+  employees.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+// ── 送出紀錄 ──
+async function submitRecord() {
+  const recorder = document.getElementById("fRecorder").value.trim();
+  const date = document.getElementById("fDate").value;
+  const name = document.getElementById("fName").value;
+  const desc = document.getElementById("fDesc").value.trim();
+  const note = document.getElementById("fNote").value.trim();
+
+  if (!recorder) { showToast("請填寫填寫人姓名", "error"); return; }
+  if (!date) { showToast("請填寫日期", "error"); return; }
+  if (!name) { showToast("請選擇員工姓名", "error"); return; }
+  if (!desc) { showToast("請填寫狀況說明", "error"); return; }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> 正在送出紀錄…';
+
+  if (isDemoMode) {
+    // 示範模式：儲存至本地 localStorage 模擬寫入
+    setTimeout(() => {
+      const localRecords = JSON.parse(localStorage.getItem("demo_records") || JSON.stringify(DEFAULT_DEMO_RECORDS));
+      localRecords.unshift({ date, recorder, name, desc, note });
+      localStorage.setItem("demo_records", JSON.stringify(localRecords));
+      
+      showToast("（本地示範）紀錄已成功儲存！");
+      resetForm();
+      loadRecords();
+    }, 600); // 模擬網路延遲
+    return;
+  }
+
+  // 雲端模式：發送 POST 至 GAS
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "addRecord", date, recorder, name, desc, note })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("紀錄已成功同步至雲端！");
+      resetForm();
+      loadRecords();
+    } else {
+      showToast(data.message || "送出失敗，請再試一次", "error");
+    }
+  } catch (e) {
+    showToast("網路錯誤，請確認設定後重試", "error");
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>📤</span> 送出紀錄';
+  }
+}
+
+function resetForm() {
+  document.getElementById("fRecorder").value = "";
+  document.getElementById("fDesc").value = "";
+  document.getElementById("fNote").value = "";
+  document.getElementById("fDate").value = todayStr();
+  document.getElementById("fName").value = "";
+}
+
+// ── 載入歷史紀錄 ──
+async function loadRecords() {
+  const btn = document.getElementById("refreshBtn");
+  btn.classList.add("spinning");
+  const list = document.getElementById("records-list");
+  list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>資料安全載入中…</p></div>`;
+
+  if (isDemoMode) {
+    // 示範模式：讀取 localStorage 中的資料
+    setTimeout(() => {
+      const localRecords = localStorage.getItem("demo_records");
+      if (!localRecords) {
+        localStorage.setItem("demo_records", JSON.stringify(DEFAULT_DEMO_RECORDS));
+        allRecords = [...DEFAULT_DEMO_RECORDS];
+      } else {
+        allRecords = JSON.parse(localRecords);
+      }
+      filterRecords();
+      btn.classList.remove("spinning");
+    }, 400); // 模擬網路延遲
+    return;
+  }
+
+  // 雲端模式：向 GAS 請求資料
+  try {
+    const res = await fetch(`${GAS_URL}?action=getRecords`);
+    const data = await res.json();
+    // 將紀錄倒序排列（最新的在最上面）
+    allRecords = (data.records || []).reverse();
+    filterRecords();
+  } catch (e) {
+    list.innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">⚠️</div>
+        <p>無法連線至雲端試算表<br><small style="color:var(--text2)">請確認您的 GAS 網址設定是否正確，且已允許匿名存取。</small></p>
+      </div>
+    `;
+    console.error(e);
+  } finally {
+    btn.classList.remove("spinning");
+  }
+}
+
+// ── 搜尋過濾與分頁 ──
+function filterRecords() {
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  filteredRecords = q
+    ? allRecords.filter(r =>
+        (r.recorder || "").toLowerCase().includes(q) ||
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.desc || "").toLowerCase().includes(q) ||
+        (r.note || "").toLowerCase().includes(q) ||
+        (r.date || "").toLowerCase().includes(q)
+      )
+    : [...allRecords];
+  currentPage = 1;
+  renderPage();
+}
+
+function renderPage() {
+  const list = document.getElementById("records-list");
+  const total = filteredRecords.length;
+
+  if (total === 0) {
+    list.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><p>目前沒有符合的狀況紀錄</p></div>`;
+    document.getElementById("pagination").innerHTML = "";
+    return;
+  }
+
+  const start = (currentPage - 1) * RECORDS_PER_PAGE;
+  const pageData = filteredRecords.slice(start, start + RECORDS_PER_PAGE);
+  const totalPages = Math.ceil(total / RECORDS_PER_PAGE);
+
+  list.innerHTML = pageData.map(r => {
+    // 解析日期格式 (預期 YYYY-MM-DD)
+    const dateParts = (r.date || "").split("-");
+    let month = "—";
+    let day = "—";
+    let weekday = "";
+    
+    if (dateParts.length === 3) {
+      const d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+      if (!isNaN(d.getTime())) {
+        month = `${d.getMonth() + 1}月`;
+        day = d.getDate();
+        weekday = `週${["日","一","二","三","四","五","六"][d.getDay()]}`;
+      }
+    }
+
+    return `
+      <div class="record-item">
+        <div class="record-date-badge">
+          <span class="date-day">${day}</span>
+          <span>${month} ${weekday}</span>
+        </div>
+        <div class="record-main">
+          <div class="record-name">
+            👤 員工: ${esc(r.name)}
+            <span class="record-recorder">
+              ✍️ 記錄人: ${esc(r.recorder || "系統")}
+            </span>
+          </div>
+          <div class="record-desc">📌 ${esc(r.desc)}</div>
+          ${r.note ? `<div class="record-note">備註：${esc(r.note)}</div>` : ""}
+        </div>
+        <div class="record-meta">🗓️ ${esc(r.date || "")}</div>
+      </div>
+    `;
+  }).join("");
+
+  // 分頁器渲染
+  const pag = document.getElementById("pagination");
+  if (totalPages <= 1) { pag.innerHTML = ""; return; }
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?"disabled":""}>‹ 上頁</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages > 7 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== totalPages) {
+      if (i === currentPage - 3 || i === currentPage + 3) html += `<span class="page-info">…</span>`;
+      continue;
+    }
+    html += `<button class="page-btn ${i===currentPage?"active":""}" onclick="goPage(${i})">${i}</button>`;
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?"disabled":""}>下頁 ›</button>`;
+  html += `<span class="page-info">共 ${total} 筆紀錄</span>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredRecords.length / RECORDS_PER_PAGE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderPage();
+  document.querySelector(".card:last-of-type").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// 安全字串轉義防止 XSS
+function esc(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+</body>
+</html>
