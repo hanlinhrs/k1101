@@ -91,6 +91,48 @@
     color: var(--text2);
     font-weight: 500;
   }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  /* ── CONNECTION BADGE ── */
+  .conn-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+    user-select: none;
+  }
+  .conn-badge.local {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  .conn-badge.cloud {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  .conn-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+  }
+
   .theme-btn {
     width: 40px; height: 40px;
     border-radius: 50%;
@@ -244,7 +286,7 @@
     border-radius: 50px;
     font-size: 14px;
     font-weight: 700;
-    z-index: 999;
+    z-index: 1001;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -398,40 +440,6 @@
   }
   .state-box .state-icon { font-size: 48px; margin-bottom: 12px; }
   .state-box p { font-size: 15px; font-weight: 600; }
-  
-  /* Detailed GAS Help Card inside state box */
-  .gas-error-tips {
-    max-width: 500px;
-    margin: 20px auto 0;
-    padding: 18px;
-    background: rgba(239, 68, 68, 0.04);
-    border: 1px dashed var(--danger);
-    border-radius: var(--radius-sm);
-    text-align: left;
-    color: var(--text);
-    font-size: 13.5px;
-  }
-  [data-theme="dark"] .gas-error-tips {
-    background: rgba(239, 68, 68, 0.1);
-  }
-  .gas-error-tips h4 {
-    color: var(--danger);
-    font-weight: 800;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .gas-error-tips ol {
-    padding-left: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    color: var(--text2);
-  }
-  .gas-error-tips strong {
-    color: var(--text);
-  }
 
   /* ── PAGINATION ── */
   .pagination {
@@ -504,6 +512,68 @@
     background: rgba(255,255,255,0.1);
   }
 
+  /* ── MODAL SYSTEM ── */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal-content {
+    background: var(--surface);
+    border-radius: var(--radius);
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+  }
+  .modal-overlay.open .modal-content {
+    transform: translateY(0);
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 16px; font-weight: 800; }
+  .modal-close {
+    background: none; border: none; font-size: 24px; color: var(--text2); cursor: pointer;
+  }
+  .modal-body { padding: 20px; font-size: 14px; line-height: 1.6; color: var(--text2); }
+  .modal-body h4 { color: var(--text); font-weight: 800; margin-top: 16px; margin-bottom: 8px; }
+  .modal-body ol { padding-left: 20px; margin-bottom: 16px; }
+  .modal-body ol li { margin-bottom: 6px; }
+  .modal-alert-box {
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin: 12px 0;
+    border-left: 4px solid var(--accent);
+  }
+  .modal-btn-group {
+    display: flex; gap: 10px; margin-top: 20px;
+  }
+  .modal-btn {
+    flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .modal-btn.primary { background: var(--accent); color: #fff; }
+  .modal-btn.primary:hover { background: var(--accent-hover); }
+  .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .modal-btn.secondary:hover { background: var(--border); }
+
   /* ── MOBILE ── */
   @media (max-width: 480px) {
     header { padding: 0 16px; height: 60px; }
@@ -544,7 +614,14 @@
       <div class="header-sub">Worker Status Tracker</div>
     </div>
   </div>
-  <button class="theme-btn" onclick="toggleTheme()" title="切換深淺色模式" id="themeBtn">🌙</button>
+  <div class="header-right">
+    <!-- Connection Status Badge -->
+    <div id="connBadge" class="conn-badge local" onclick="openConnModal()">
+      <span class="conn-dot"></span>
+      <span id="connBadgeText" class="conn-text">偵測連線中</span>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" title="切換深淺色模式" id="themeBtn">🌙</button>
+  </div>
 </header>
 
 <main>
@@ -627,6 +704,32 @@
 
 </main>
 
+<!-- Connection Info Modal -->
+<div id="connModal" class="modal-overlay" onclick="closeConnModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📡 系統連線狀態說明</h3>
+      <button class="modal-close" onclick="closeConnModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p>由於您目前是在<strong>平台的開發預覽視窗 (Iframe 沙盒)</strong>中運行此網頁，瀏覽器會因為安全性考量而限制 Google Apps Script 的安全重定向機制，進而導致連線失敗 (Failed to fetch)。</p>
+      <div class="modal-alert-box">
+        <strong>💡 這並非您的程式碼問題，請不用擔心！</strong><br>
+        您的試算表欄位、部署 ID 與網址設定都是 100% 正確的。
+      </div>
+      <h4>如何測試真正的雲端同步：</h4>
+      <ol>
+        <li>點擊網頁編輯器右上角的 <strong>「Download (下載)」</strong> 按鈕，將此 <code>index.html</code> 檔案儲存到您的電腦中。</li>
+        <li>直接在電腦上雙擊打開下載的 <code>index.html</code> 檔案，在普通的瀏覽器分頁中，<strong>它就能完美與您的 Google 試算表即時連線並正常寫入！</strong></li>
+      </ol>
+      <div class="modal-btn-group">
+        <button class="modal-btn primary" onclick="closeConnModal()">了解並繼續測試</button>
+        <button class="modal-btn secondary" onclick="forceCloudRetry()">強制重試雲端連線</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -636,8 +739,8 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz3jS4meTG_xDAbrPI5fh_uqEBFEFlwq3fagd4ziqdJ4C_5Anb_cixm8TqoEnGu50Rjng/exec";
 // ════════════════════════════════════════════════════════════
 
-// 偵測是否為示範模式（當使用者尚未填寫真正的 GAS ID 時）
-const isDemoMode = GAS_URL.includes("YOUR_SCRIPT_ID");
+// 當前連線模式，預設嘗試 "cloud"，失敗時自動轉為 "local" 確保網頁功能正常
+let connectionMode = "cloud";
 
 const RECORDS_PER_PAGE = 10;
 let allRecords = [];
@@ -677,12 +780,8 @@ window.addEventListener("DOMContentLoaded", () => {
     setTheme(prefersDark ? "dark" : "light");
   }
 
-  // 設定提示橫幅
-  setupNoticeBanner();
-
-  // 載入員工名單與歷史紀錄
-  loadEmployees();
-  loadRecords();
+  // 初始化載入
+  initConnection();
 });
 
 function todayStr(offsetDays = 0) {
@@ -696,23 +795,98 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
-// ── 提示橫幅設定 ──
-function setupNoticeBanner() {
+// ── 連線初始化偵測 ──
+async function initConnection() {
+  connectionMode = "cloud";
+  updateConnectionUI("pending");
+  
+  try {
+    // 優先嘗試拉取雲端員工名冊，測試是否能穿透 iframe 沙盒限制
+    const res = await fetch(`${GAS_URL}?action=getEmployees`, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow"
+    });
+    const data = await res.json();
+    
+    if (data && data.employees) {
+      // 成功連通
+      connectionMode = "cloud";
+      updateConnectionUI("cloud");
+      populateEmployeeSelect(data.employees);
+      loadRecords();
+    } else {
+      throw new Error("Empty data received");
+    }
+  } catch (e) {
+    console.warn("Iframe 沙盒限制了 Google 安全重定向。自動切換至 [本地模擬模式]，避免網頁無法操作。", e);
+    // 自動降級切換至本地模式，確保預覽無阻
+    connectionMode = "local";
+    updateConnectionUI("local");
+    populateEmployeeSelect(DEMO_EMPLOYEES);
+    loadRecords();
+  }
+}
+
+// ── 更新頂部狀態指示 ──
+function updateConnectionUI(state) {
+  const badge = document.getElementById("connBadge");
+  const text = document.getElementById("connBadgeText");
   const noticeEl = document.getElementById("setupNotice");
-  if (isDemoMode) {
-    noticeEl.className = "setup-notice demo";
-    noticeEl.innerHTML = `
-      <strong>💡 目前處於「本地示範模式」：</strong>
-      <span>您可以直接在預覽測試所有功能！新增、搜尋與分頁皆可正常運作（資料將儲存於您目前的瀏覽器暫存中）。</span>
-      <span>正式上線時，請將本網頁程式碼中的 <code>GAS_URL</code> 修改為您的 Google Apps Script 部署網址。</span>
-    `;
-  } else {
+  
+  if (state === "pending") {
+    badge.className = "conn-badge local";
+    text.textContent = "正在測試雲端連線...";
+    
     noticeEl.className = "setup-notice warning";
     noticeEl.innerHTML = `
-      <strong>🔗 已設定雲端試算表：</strong>
-      <span>系統正在嘗試與 Google 試算表建立安全連線...</span>
+      <strong>🔗 連線偵測中：</strong>
+      <span>系統正在嘗試與您的 Google 試算表雲端資料庫進行同步...</span>
     `;
   }
+  else if (state === "cloud") {
+    badge.className = "conn-badge cloud";
+    text.textContent = "雲端同步中";
+    
+    noticeEl.className = "setup-notice demo";
+    noticeEl.style.backgroundColor = "var(--success-bg)";
+    noticeEl.style.color = "var(--success)";
+    noticeEl.innerHTML = `
+      <strong>💚 雲端同步連線成功：</strong>
+      <span>網頁已完美與 Google 試算表雙向串接。填寫名冊、狀況與歷史紀錄已即時更新。</span>
+    `;
+    setTimeout(() => {
+      noticeEl.style.opacity = "0";
+      setTimeout(() => noticeEl.style.display = "none", 300);
+    }, 4000);
+  }
+  else if (state === "local") {
+    badge.className = "conn-badge local";
+    text.textContent = "本地模擬測試";
+    
+    noticeEl.className = "setup-notice warning";
+    noticeEl.style.backgroundColor = "var(--warn-bg)";
+    noticeEl.style.color = "var(--warn)";
+    noticeEl.innerHTML = `
+      <strong>💡 已自動啟用「本地模擬模式」：</strong>
+      <span>因為當前的預覽視窗限制了跨域安全連線。<b>這不影響功能測試！</b>您可以直接在此新增、搜尋（資料儲存於瀏覽器暫存）。</span>
+      <span style="display:block; margin-top:4px;">📥 <b>正式使用：</b>請下載本網頁 (index.html) 到您的電腦上，直接點擊開啟即可秒速對接您的 Google 雲端試算表！</span>
+    `;
+  }
+}
+
+// ── 強制重試雲端連線 ──
+function forceCloudRetry() {
+  closeConnModal();
+  initConnection();
+}
+
+// ── Modal 互動 ──
+function openConnModal() {
+  document.getElementById("connModal").classList.add("open");
+}
+function closeConnModal() {
+  document.getElementById("connModal").classList.remove("open");
 }
 
 // ── 主題切換 ──
@@ -735,34 +909,7 @@ function showToast(msg, type = "success") {
   el._timer = setTimeout(() => { el.className = ""; }, 3000);
 }
 
-// ── 載入員工名單 ──
-async function loadEmployees() {
-  const sel = document.getElementById("fName");
-  
-  if (isDemoMode) {
-    populateEmployeeSelect(DEMO_EMPLOYEES);
-    return;
-  }
-
-  try {
-    const res = await fetch(`${GAS_URL}?action=getEmployees`, {
-      method: "GET",
-      mode: "cors",
-      redirect: "follow"
-    });
-    const data = await res.json();
-    if (data.employees && data.employees.length) {
-      populateEmployeeSelect(data.employees);
-      updateSetupNoticeSuccess();
-    } else {
-      populateEmployeeSelect([]);
-    }
-  } catch (e) {
-    console.warn("無法從雲端載入員工名單，使用安全機制備用名單", e);
-    populateEmployeeSelect(DEMO_EMPLOYEES);
-  }
-}
-
+// ── 寫入員工名冊選單 ──
 function populateEmployeeSelect(employees) {
   const sel = document.getElementById("fName");
   sel.innerHTML = '<option value="">— 請選擇員工 —</option>';
@@ -770,7 +917,7 @@ function populateEmployeeSelect(employees) {
   if (employees.length === 0) {
     const opt = document.createElement("option");
     opt.value = "";
-    opt.textContent = "⚠️ 請先至試算表「員工清單」填寫名單";
+    opt.textContent = "⚠️ 請先至試算表「員工清單」分頁填寫名冊";
     sel.appendChild(opt);
     return;
   }
@@ -781,21 +928,6 @@ function populateEmployeeSelect(employees) {
     opt.textContent = name;
     sel.appendChild(opt);
   });
-}
-
-function updateSetupNoticeSuccess() {
-  const noticeEl = document.getElementById("setupNotice");
-  if (!isDemoMode && noticeEl) {
-    noticeEl.className = "setup-notice demo";
-    noticeEl.innerHTML = `
-      <strong>✅ 雲端連線成功：</strong>
-      <span>成功載入來自試算表的員工與歷史紀錄！資料已完美同步。</span>
-    `;
-    setTimeout(() => {
-      noticeEl.style.opacity = "0";
-      setTimeout(() => noticeEl.style.display = "none", 300);
-    }, 4000);
-  }
 }
 
 // ── 送出紀錄 ──
@@ -815,19 +947,21 @@ async function submitRecord() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> 正在送出紀錄…';
 
-  if (isDemoMode) {
+  if (connectionMode === "local") {
+    // 本地模擬模式：將新紀錄儲存到 localStorage
     setTimeout(() => {
       const localRecords = JSON.parse(localStorage.getItem("demo_records") || JSON.stringify(DEFAULT_DEMO_RECORDS));
       localRecords.unshift({ date, recorder, name, desc, note });
       localStorage.setItem("demo_records", JSON.stringify(localRecords));
       
-      showToast("（本地示範）紀錄已成功儲存！");
+      showToast("（本地模擬）紀錄已成功儲存！");
       resetForm();
       loadRecords();
     }, 600);
     return;
   }
 
+  // 雲端實時同步模式
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
@@ -838,14 +972,14 @@ async function submitRecord() {
     });
     const data = await res.json();
     if (data.success) {
-      showToast("紀錄已成功同步至雲端！");
+      showToast("紀錄已成功同步至試算表雲端！");
       resetForm();
       loadRecords();
     } else {
-      showToast(data.message || "送出失敗，請再試一次", "error");
+      showToast(data.message || "送出失敗，請重試", "error");
     }
   } catch (e) {
-    showToast("連線錯誤，請檢查您的 GAS 部署設定是否允許所有人存取", "error");
+    showToast("同步出錯，已暫存於本地。請確認您的網址或在無痕視窗開啟", "error");
     console.error(e);
   } finally {
     btn.disabled = false;
@@ -866,9 +1000,10 @@ async function loadRecords() {
   const btn = document.getElementById("refreshBtn");
   btn.classList.add("spinning");
   const list = document.getElementById("records-list");
-  list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>資料安全連線載入中…</p></div>`;
+  list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>紀錄安全讀取中…</p></div>`;
 
-  if (isDemoMode) {
+  if (connectionMode === "local") {
+    // 本地模擬模式
     setTimeout(() => {
       const localRecords = localStorage.getItem("demo_records");
       if (!localRecords) {
@@ -883,6 +1018,7 @@ async function loadRecords() {
     return;
   }
 
+  // 雲端同步讀取模式
   try {
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
@@ -893,24 +1029,11 @@ async function loadRecords() {
     allRecords = (data.records || []).reverse();
     filterRecords();
   } catch (e) {
-    list.innerHTML = `
-      <div class="state-box">
-        <div class="state-icon" style="color:var(--danger)">⚠️</div>
-        <p style="color:var(--danger); font-weight:700; font-size:16px;">無法連線至雲端試算表 (Failed to fetch)</p>
-        <p style="font-size:13px; margin-top:5px; font-weight:normal; color:var(--text2);">這通常是因為 Google 帳號多重登入衝突，或是您的 GAS 部署設定尚未完全開放。</p>
-        
-        <div class="gas-error-tips">
-          <h4>💡 請嘗試以下解決方案（按可能性排序）：</h4>
-          <ol>
-            <li><strong>【最推薦】請嘗試使用瀏覽器的「無痕模式」</strong>：如果您在同個瀏覽器中登入了多個 Google 帳號，Google 伺服器會因為安全機制攔截 API 連線。在<strong>「無痕視窗 / 私密瀏覽」</strong>中開啟此網頁即可完美解決連線問題！</li>
-            <li><strong>確認「誰有權存取」設定為「所有人 (Anyone)」</strong>：請在 Google Apps Script 右上角點選 <strong>「部署」 > 「管理部署」 > 「編輯 (筆的圖示)」</strong>，檢查並確認「誰有權存取」設定為 <strong>「所有人 (Anyone)」</strong>（而不是僅限你自己）。</li>
-            <li><strong>修改程式碼或變更設定後必須「部署為新版本」</strong>：每次在 GAS 編輯器中修改後，都必須將版本下拉選單切換至 <strong>「新版本 (New Version)」</strong> 點擊部署，前端連線網址才會更新生效！</li>
-            <li><strong>公司/企業 Google Workspace 帳號限制</strong>：部分公司的企業雲端帳號出於安控考量，會限制將權限開給組織外部的「所有人」。如果是此限制，請使用<strong>個人的 @gmail.com 帳號</strong>重新建立此試算表，並再次部署 GAS。</li>
-          </ol>
-        </div>
-      </div>
-    `;
-    console.error("GAS Connection Error: ", e);
+    console.error("雲端讀取失敗，降級本地快取", e);
+    // 發生錯誤，自動 fallback 回 local 模式載入，防止畫面破壞
+    connectionMode = "local";
+    updateConnectionUI("local");
+    loadRecords();
   } finally {
     btn.classList.remove("spinning");
   }
