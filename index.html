@@ -460,7 +460,7 @@
     font-size: 13px;
     font-weight: 700;
     display: flex;
-    align-items: center; justify-content: center;
+    align-items: center justify-content: center;
     padding: 0 12px;
     transition: all 0.2s ease;
   }
@@ -518,7 +518,7 @@
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5);
     display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
+    z-index: 1010;
     padding: 16px;
     opacity: 0;
     pointer-events: none;
@@ -925,7 +925,8 @@ function populateEmployeeSelect(employees) {
   employees.forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
-    opt.textContent = name;
+    // 如果是本地模擬，加上黃色 [模擬] 前綴
+    opt.textContent = (connectionMode === "local" ? "💡 [模擬名單] " : "") + name;
     sel.appendChild(opt);
   });
 }
@@ -1085,7 +1086,7 @@ function renderPage() {
     }
 
     return `
-      <div class="record-item">
+      <div class="record-item" style="${connectionMode === "local" ? "border-color: var(--warn); background: rgba(245,158,11,0.01);" : ""}">
         <div class="record-date-badge">
           <span class="date-day">${day}</span>
           <span>${month} ${weekday}</span>
@@ -1093,6 +1094,7 @@ function renderPage() {
         <div class="record-main">
           <div class="record-name">
             👤 員工: ${esc(r.name)}
+            ${connectionMode === "local" ? `<span style="font-size:10px; background:var(--warn-bg); color:var(--warn); padding:2px 8px; border-radius:100px; margin-left:6px; font-weight:700; border: 1px solid rgba(245,158,11,0.2)">本地模擬</span>` : ""}
             <span class="record-recorder">
               ✍️ 記錄人: ${esc(r.recorder || "系統")}
             </span>
