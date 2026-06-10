@@ -86,11 +86,6 @@
     line-height: 1.2;
     letter-spacing: 0.5px;
   }
-  .header-sub {
-    font-size: 11px;
-    color: var(--text2);
-    font-weight: 500;
-  }
   .header-right {
     display: flex;
     align-items: center;
@@ -1122,12 +1117,13 @@ function renderPage() {
     let d = null;
 
     if (r.date) {
-      // 試著將接收到的日期轉換為 Date 物件（不論是 2026-06-10 還是 Timezone 字串）
-      d = new Date(r.date);
+      // 核心相容性修復：移除括號中文註記（如 台北標準時間），這在 Safari/iOS 等瀏覽器會解析出 NaN
+      let cleanDateStr = String(r.date).replace(/\s*\(.*?\)\s*/g, "").trim();
+      d = new Date(cleanDateStr);
       
-      // 避免 Safari 或部分特殊日期格式解析失敗時的相容性防錯
-      if (isNaN(d.getTime()) || (typeof r.date === "string" && r.date.includes("-") && !r.date.includes("GMT") && !r.date.includes("台北"))) {
-        const parts = String(r.date).split("T")[0].split("-");
+      // 相容性防錯備份方案（如果還是解析失敗，則採用 split 手動切分）
+      if (isNaN(d.getTime())) {
+        const parts = cleanDateStr.split("T")[0].split("-");
         if (parts.length === 3) {
           d = new Date(parts[0], parts[1] - 1, parts[2]);
         }
@@ -1140,7 +1136,7 @@ function renderPage() {
       weekday = `週${["日","一","二","三","四","五","六"][d.getDay()]}`;
     }
 
-    // 格式化右側日期為標準易讀的 YYYY-MM-DD
+    // 格式化右下角日期為標準易讀格式 (YYYY-MM-DD)，且不顯示任何具體時間/時區
     let displayDate = "";
     if (d && !isNaN(d.getTime())) {
       const y = d.getFullYear();
