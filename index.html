@@ -600,7 +600,6 @@
     <div class="header-icon">👷</div>
     <div>
       <div class="header-title" id="pageTitle">移工工作狀況紀錄</div>
-      <div class="header-sub" id="pageSub">Worker Status Tracker</div>
     </div>
   </div>
   <div class="header-right">
@@ -784,7 +783,6 @@ function initRoute() {
   const viewFormBtn = document.getElementById("viewFormBtn");
   
   const pageTitle = document.getElementById("pageTitle");
-  const pageSub = document.getElementById("pageSub");
 
   if (view === 'records') {
     currentView = "records";
@@ -796,7 +794,6 @@ function initRoute() {
     // 調整頁面與標頭文字
     document.title = "歷史紀錄列表 - 移工工作狀況紀錄系統";
     pageTitle.textContent = "移工狀況歷史紀錄";
-    pageSub.textContent = "Worker Status History List";
   } else {
     currentView = "form";
     formCard.style.display = "block";
@@ -807,7 +804,6 @@ function initRoute() {
     // 還原預設標頭
     document.title = "移工工作狀況紀錄系統";
     pageTitle.textContent = "移工工作狀況紀錄";
-    pageSub.textContent = "Worker Status Tracker";
   }
 }
 
@@ -1120,18 +1116,39 @@ function renderPage() {
   const totalPages = Math.ceil(total / RECORDS_PER_PAGE);
 
   list.innerHTML = pageData.map(r => {
-    const dateParts = (r.date || "").split("-");
     let month = "—";
     let day = "—";
     let weekday = "";
-    
-    if (dateParts.length === 3) {
-      const d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      if (!isNaN(d.getTime())) {
-        month = `${d.getMonth() + 1}月`;
-        day = d.getDate();
-        weekday = `週${["日","一","二","三","四","五","六"][d.getDay()]}`;
+    let d = null;
+
+    if (r.date) {
+      // 試著將接收到的日期轉換為 Date 物件（不論是 2026-06-10 還是 Timezone 字串）
+      d = new Date(r.date);
+      
+      // 避免 Safari 或部分特殊日期格式解析失敗時的相容性防錯
+      if (isNaN(d.getTime()) || (typeof r.date === "string" && r.date.includes("-") && !r.date.includes("GMT") && !r.date.includes("台北"))) {
+        const parts = String(r.date).split("T")[0].split("-");
+        if (parts.length === 3) {
+          d = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
       }
+    }
+
+    if (d && !isNaN(d.getTime())) {
+      month = `${d.getMonth() + 1}月`;
+      day = d.getDate();
+      weekday = `週${["日","一","二","三","四","五","六"][d.getDay()]}`;
+    }
+
+    // 格式化右側日期為標準易讀的 YYYY-MM-DD
+    let displayDate = "";
+    if (d && !isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      displayDate = `${y}-${m}-${dayStr}`;
+    } else {
+      displayDate = r.date || "";
     }
 
     return `
@@ -1150,7 +1167,7 @@ function renderPage() {
           <div class="record-desc">📌 ${esc(r.desc)}</div>
           ${r.note ? `<div class="record-note">備註：${esc(r.note)}</div>` : ""}
         </div>
-        <div class="record-meta">🗓️ ${esc(r.date || "")}</div>
+        <div class="record-meta">🗓️ ${esc(displayDate)}</div>
       </div>
     `;
   }).join("");
