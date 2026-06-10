@@ -130,6 +130,7 @@
     font-weight: 700;
     border: 1px solid var(--border);
     user-select: none;
+    cursor: pointer;
   }
   .conn-badge.pending {
     background: var(--surface2);
@@ -499,6 +500,68 @@
     font-weight: 600;
   }
 
+  /* ── MODAL SYSTEM ── */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1010;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal-content {
+    background: var(--surface);
+    border-radius: var(--radius);
+    max-width: 520px;
+    width: 100%;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+  }
+  .modal-overlay.open .modal-content {
+    transform: translateY(0);
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 16px; font-weight: 800; }
+  .modal-close {
+    background: none; border: none; font-size: 24px; color: var(--text2); cursor: pointer;
+  }
+  .modal-body { padding: 20px; font-size: 14px; line-height: 1.6; color: var(--text2); }
+  .modal-body h4 { color: var(--text); font-weight: 800; margin-top: 16px; margin-bottom: 8px; }
+  .modal-body ol { padding-left: 20px; margin-bottom: 16px; }
+  .modal-body ol li { margin-bottom: 8px; }
+  .modal-alert-box {
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin: 12px 0;
+    border-left: 4px solid var(--accent);
+  }
+  .modal-btn-group {
+    display: flex; gap: 10px; margin-top: 20px;
+  }
+  .modal-btn {
+    flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .modal-btn.primary { background: var(--accent); color: #fff; }
+  .modal-btn.primary:hover { background: var(--accent-hover); }
+  .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .modal-btn.secondary:hover { background: var(--border); }
+
   /* ── MOBILE ── */
   @media (max-width: 480px) {
     header { padding: 0 16px; height: 60px; }
@@ -545,8 +608,8 @@
     <button id="viewRecordsBtn" class="nav-btn" onclick="openRecordsPage()" title="在新視窗開啟歷史紀錄">📋 歷史紀錄</button>
     <button id="viewFormBtn" class="nav-btn" onclick="openFormPage()" title="在新視窗開啟新增登記" style="display:none;">📝 新增紀錄</button>
     
-    <!-- Connection Status Badge -->
-    <div id="connBadge" class="conn-badge pending">
+    <!-- Connection Status Badge (點擊開啟診斷視窗) -->
+    <div id="connBadge" class="conn-badge pending" onclick="openConnModal()" title="點選進行連線診斷與排查">
       <span class="conn-dot"></span>
       <span id="connBadgeText" class="conn-text">連線偵測中</span>
     </div>
@@ -628,6 +691,49 @@
   </div>
 
 </main>
+
+<!-- Connection Info Modal (診斷與排查助手) -->
+<div id="connModal" class="modal-overlay" onclick="closeConnModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🔌 雲端連線診斷與排查助手</h3>
+      <button class="modal-close" onclick="closeConnModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-alert-box" style="background: rgba(239, 68, 68, 0.08); color: var(--danger); border-left: 4px solid var(--danger);">
+        <strong>❌ 網頁目前無法與 Google Apps Script (GAS) 建立連線</strong><br>
+        通常是由於 GAS 後端的「部署設定」未完全對外公開（被 Google 權限阻擋）。
+      </div>
+      
+      <h4>💡 請依照以下 3 個步驟重新設定與排查您的 Apps Script：</h4>
+      <ol>
+        <li>打開您的 Google 雲端硬碟，進入該專案的 Apps Script 編輯器。</li>
+        <li>點擊右上角綠色按鈕 <strong>「部署 (Deploy)」</strong> ➡️ 選擇 <strong>「管理部署 (Manage deployments)」</strong> 或 <strong>「新建部署 (New deployment)」</strong>：
+          <ul style="padding-left: 20px; margin-top: 4px;">
+            <li>部署類型務必選：<strong>「網頁應用程式 (Web app)」</strong></li>
+            <li>將應用程式執行為 (Execute as)：選取 <strong>「我 (Me - 您的 Google 帳號)」</strong></li>
+            <li>誰有權限存取 (Who has access)：務必選取 <strong>「任何人 (Anyone)」</strong> <br><i>(※ 注意：千萬不能選僅限自己或僅限 Google 帳戶，否則瀏覽器會回傳 CORS 失敗)</i></li>
+          </ul>
+        </li>
+        <li>點擊 <strong>「部署」</strong>。若 Google 彈出授權視窗，請務必點選「查看權限」➡️「進階」➡️「轉往未命名專案」➡️ 按下「允許」完成授權。</li>
+        <li>複製產生的<strong>網頁應用程式網址 (結尾為 /exec)</strong>。</li>
+      </ol>
+
+      <h4>🔧 即時測試您複製的新網址：</h4>
+      <div style="display: flex; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
+        <input type="text" id="tempGasUrl" placeholder="在此貼上結尾為 /exec 的新網址..." style="font-size: 13px; padding: 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text);">
+        <button class="nav-btn" onclick="testTempUrl()" style="flex-shrink: 0; background: var(--accent); color: white; border: none; padding: 0 16px; border-radius: var(--radius-sm); font-weight: bold;">測試連線</button>
+      </div>
+
+      <div id="testResult" style="display: none; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; margin-bottom: 12px; line-height: 1.6;"></div>
+
+      <div class="modal-btn-group">
+        <button class="modal-btn secondary" onclick="closeConnModal()">關閉視窗</button>
+        <button class="modal-btn primary" onclick="location.reload()">重新整理網頁</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -757,14 +863,14 @@ async function initConnection() {
     
     if (currentView === "form") {
       const sel = document.getElementById("fName");
-      sel.innerHTML = '<option value="">❌ 載入失敗，請重新整理頁面</option>';
-      showToast("無法取得雲端員工名單，請確認網路或重新整理頁面", "error");
+      sel.innerHTML = '<option value="">❌ 載入失敗，請點選右上角紅燈排查連線</option>';
+      showToast("無法取得雲端員工名單，請點右上角燈號進行連線排查", "error");
     } else {
       const list = document.getElementById("records-list");
       list.innerHTML = `
         <div class="state-box">
           <div class="state-icon">❌</div>
-          <p>無法取得歷史紀錄，請確認網路連線並重新整理頁面。</p>
+          <p>無法取得歷史紀錄，請點選右上角紅燈按鈕進行設定診斷排查。</p>
         </div>
       `;
     }
@@ -786,7 +892,80 @@ function updateConnectionUI(state) {
   }
   else if (state === "error") {
     badge.className = "conn-badge error";
-    text.textContent = "🔴 連線失敗（請重新整理）";
+    text.textContent = "🔴 連線失敗（點選排查）";
+  }
+}
+
+// ── Modal 互動 ──
+function openConnModal() {
+  document.getElementById("connModal").classList.add("open");
+  document.getElementById("tempGasUrl").value = GAS_URL;
+}
+function closeConnModal() {
+  document.getElementById("connModal").classList.remove("open");
+  document.getElementById("testResult").style.display = "none";
+}
+
+// ── 即時測試使用者在視窗中貼入的新 GAS 網址 ──
+async function testTempUrl() {
+  const url = document.getElementById("tempGasUrl").value.trim();
+  const resultEl = document.getElementById("testResult");
+  
+  if (!url) {
+    showToast("請輸入欲測試的網址", "error");
+    return;
+  }
+  if (!url.startsWith("https://script.google.com")) {
+    resultEl.style.display = "block";
+    resultEl.style.background = "rgba(239, 68, 68, 0.08)";
+    resultEl.style.color = "var(--danger)";
+    resultEl.textContent = "⚠️ 網址格式不正確！必須是 Google Apps Script 網址（以 https://script.google.com 開頭）。";
+    return;
+  }
+
+  resultEl.style.display = "block";
+  resultEl.style.background = "var(--surface2)";
+  resultEl.style.color = "var(--text2)";
+  resultEl.textContent = "⏳ 正在與該網址建立測試連線，請稍候...";
+
+  try {
+    const res = await fetch(`${url}?action=getEmployees`, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow"
+    });
+    const data = await res.json();
+    
+    if (data && data.employees) {
+      resultEl.style.background = "var(--success-bg)";
+      resultEl.style.color = "var(--success)";
+      resultEl.innerHTML = `
+        🎉 連線測試成功！<br>
+        您設定的這組新 GAS 權限完全正確，且能成功抓取名單。<br>
+        <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 6px; color: var(--text2); line-height: 1.5;">
+          👉 <b>修復步驟：</b><br>
+          1. 複製此網址，用編輯器打開您的 <code>index.html</code>。<br>
+          2. 找到第 481 行的 <code>const GAS_URL = "...";</code> 並置換為此網址。<br>
+          3. 重新 Commit & Push 上傳至您的 GitHub 儲存庫。<br>
+          4. 等待 1 分鐘後重新整理本網頁，即可完美正常運作！
+        </span>
+      `;
+    } else {
+      throw new Error("Invalid format");
+    }
+  } catch (e) {
+    console.error(e);
+    resultEl.style.background = "rgba(239, 68, 68, 0.08)";
+    resultEl.style.color = "var(--danger)";
+    resultEl.innerHTML = `
+      ❌ 連線測試依舊失敗！<br>
+      <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 4px; color: var(--text2); line-height: 1.5;">
+        可能原因排查：<br>
+        1. <b>「誰有權限存取 (Who has access)」</b>未選擇為「任何人 (Anyone)」。<br>
+        2. 您複製成了<b>「測試部署」</b>網址（其網址結尾為 <code>/dev</code>），請重新「新建部署」並複製結尾為 <code>/exec</code> 的網址。<br>
+        3. 專案在部署時未點擊「允許授權」按鈕。
+      </span>
+    `;
   }
 }
 
