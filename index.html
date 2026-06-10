@@ -128,24 +128,22 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
     border: 1px solid var(--border);
     user-select: none;
   }
-  .conn-badge.local {
-    background: var(--warn-bg);
-    color: var(--warn);
-    border-color: rgba(245, 158, 11, 0.3);
+  .conn-badge.pending {
+    background: var(--surface2);
+    color: var(--text2);
+  }
+  .conn-badge.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.2);
   }
   .conn-badge.cloud {
     background: var(--success-bg);
     color: var(--success);
     border-color: rgba(16, 185, 129, 0.3);
-  }
-  .conn-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
   }
   .conn-dot {
     width: 8px;
@@ -501,102 +499,6 @@
     font-weight: 600;
   }
 
-  /* ── SETUP & DEMO NOTICE ── */
-  .setup-notice {
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    font-size: 13.5px;
-    line-height: 1.6;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: all 0.3s;
-  }
-  .setup-notice.warning {
-    background: var(--warn-bg);
-    border: 1.5px solid var(--warn);
-    color: var(--warn);
-  }
-  .setup-notice.demo {
-    background: var(--success-bg);
-    border: 1.5px solid var(--success);
-    color: var(--success);
-  }
-  .setup-notice strong { font-weight: 800; display: flex; align-items: center; gap: 6px; }
-  .setup-notice code {
-    background: rgba(0,0,0,0.06);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    font-weight: bold;
-  }
-  [data-theme="dark"] .setup-notice code {
-    background: rgba(255,255,255,0.1);
-  }
-
-  /* ── MODAL SYSTEM ── */
-  .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1010;
-    padding: 16px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .modal-content {
-    background: var(--surface);
-    border-radius: var(--radius);
-    max-width: 500px;
-    width: 100%;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    transform: translateY(20px);
-    transition: transform 0.2s ease;
-  }
-  .modal-overlay.open .modal-content {
-    transform: translateY(0);
-  }
-  .modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .modal-header h3 { font-size: 16px; font-weight: 800; }
-  .modal-close {
-    background: none; border: none; font-size: 24px; color: var(--text2); cursor: pointer;
-  }
-  .modal-body { padding: 20px; font-size: 14px; line-height: 1.6; color: var(--text2); }
-  .modal-body h4 { color: var(--text); font-weight: 800; margin-top: 16px; margin-bottom: 8px; }
-  .modal-body ol { padding-left: 20px; margin-bottom: 16px; }
-  .modal-body ol li { margin-bottom: 6px; }
-  .modal-alert-box {
-    background: var(--accent-light);
-    color: var(--accent);
-    padding: 12px 16px;
-    border-radius: var(--radius-sm);
-    margin: 12px 0;
-    border-left: 4px solid var(--accent);
-  }
-  .modal-btn-group {
-    display: flex; gap: 10px; margin-top: 20px;
-  }
-  .modal-btn {
-    flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-weight: 700; cursor: pointer; transition: all 0.2s;
-  }
-  .modal-btn.primary { background: var(--accent); color: #fff; }
-  .modal-btn.primary:hover { background: var(--accent-hover); }
-  .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .modal-btn.secondary:hover { background: var(--border); }
-
   /* ── MOBILE ── */
   @media (max-width: 480px) {
     header { padding: 0 16px; height: 60px; }
@@ -644,9 +546,9 @@
     <button id="viewFormBtn" class="nav-btn" onclick="openFormPage()" title="在新視窗開啟新增登記" style="display:none;">📝 新增紀錄</button>
     
     <!-- Connection Status Badge -->
-    <div id="connBadge" class="conn-badge local" onclick="openConnModal()">
+    <div id="connBadge" class="conn-badge pending">
       <span class="conn-dot"></span>
-      <span id="connBadgeText" class="conn-text">偵測連線中</span>
+      <span id="connBadgeText" class="conn-text">連線偵測中</span>
     </div>
     <button class="theme-btn" onclick="toggleTheme()" title="切換深淺色模式" id="themeBtn">🌙</button>
   </div>
@@ -654,18 +556,13 @@
 
 <main>
 
-  <!-- Setup/Demo Notice -->
-  <div class="setup-notice" id="setupNotice">
-    <!-- Will be dynamically populated by JS -->
-  </div>
-
   <!-- Form Card (新增紀錄頁面) -->
   <div class="card" id="formCard">
     <div class="card-header">
       <span class="card-header-icon">📝</span>
       <div class="card-header-text">
         <h2>新增狀況紀錄</h2>
-        <p>填寫完畢後點擊送出，資料將同步更新</p>
+        <p>填寫完畢後點擊送出，資料將同步更新至雲端試算表</p>
       </div>
     </div>
     <div class="card-body">
@@ -681,7 +578,7 @@
         <div class="form-group">
           <label>員工姓名 <span class="required">*</span></label>
           <select id="fName" required>
-            <option value="">— 請選擇員工 —</option>
+            <option value="">— 員工名單載入中... —</option>
           </select>
         </div>
         <div class="form-group full">
@@ -705,7 +602,7 @@
       <span class="card-header-icon">📋</span>
       <div class="card-header-text">
         <h2>狀況歷史紀錄列表</h2>
-        <p>即時串接試算表的雲端唯讀紀錄列表</p>
+        <p>即時串接試算表的雲端歷史唯讀紀錄</p>
       </div>
     </div>
     <div class="card-body">
@@ -722,7 +619,7 @@
       <div id="records-list">
         <div class="state-box">
           <div class="state-icon">⏳</div>
-          <p>資料載入中…</p>
+          <p>歷史紀錄讀取中…</p>
         </div>
       </div>
 
@@ -731,32 +628,6 @@
   </div>
 
 </main>
-
-<!-- Connection Info Modal -->
-<div id="connModal" class="modal-overlay" onclick="closeConnModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>📡 系統連線狀態說明</h3>
-      <button class="modal-close" onclick="closeConnModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <p>由於您目前是在<strong>平台的開發預覽視窗 (Iframe 沙盒)</strong>中運行此網頁，瀏覽器會因為安全性考量而限制 Google Apps Script 的安全重定向機制，進而導致連線失敗 (Failed to fetch)。</p>
-      <div class="modal-alert-box">
-        <strong>💡 這並非您的程式碼問題，請不用擔心！</strong><br>
-        您的試算表欄位、部署 ID 與網址設定都是 100% 正確的。
-      </div>
-      <h4>如何測試真正的雲端同步：</h4>
-      <ol>
-        <li>點擊網頁編輯器右上角的 <strong>「Download (下載)」</strong> 按鈕，將此 <code>index.html</code> 檔案儲存到您的電腦中。</li>
-        <li>直接在電腦上雙擊打開下載的 <code>index.html</code> 檔案，在普通的瀏覽器分頁中，<strong>它就能完美與您的 Google 試算表即時連線並正常寫入！</strong></li>
-      </ol>
-      <div class="modal-btn-group">
-        <button class="modal-btn primary" onclick="closeConnModal()">了解並繼續測試</button>
-        <button class="modal-btn secondary" onclick="forceCloudRetry()">強制重試雲端連線</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div id="toast"></div>
 
@@ -770,31 +641,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbz3jS4meTG_xDAbrPI5fh_u
 // 當前頁面模式，預設 "form" (填寫模式)，另有 "records" (歷史紀錄模式)
 let currentView = "form";
 
-// 當前連線模式，預設嘗試 "cloud"，失敗時自動轉為 "local" 確保網頁功能正常
-let connectionMode = "cloud";
-
 const RECORDS_PER_PAGE = 10;
 let allRecords = [];
 let filteredRecords = [];
 let currentPage = 1;
-
-// ── 本地示範資料庫 (Demo Mode Database) ──
-const DEMO_EMPLOYEES = [
-  "王小明 (阿明)", 
-  "阮氏香 (阿香)", 
-  "阿古斯 (Agus)", 
-  "陳美玲 (Siti)", 
-  "蘇帝諾 (Sutino)",
-  "裴文英 (Anh)"
-];
-
-const DEFAULT_DEMO_RECORDS = [
-  { date: todayStr(), recorder: "林主任", name: "阮氏香 (阿香)", desc: "今日工作效率優良，提早完成產線備料工作。", note: "領班給予口頭嘉獎" },
-  { date: todayStr(-1), recorder: "張組長", name: "阿古斯 (Agus)", desc: "上午因身體不舒服（感冒），請病假半天。下午已回崗位。", note: "已出示診所就醫證明" },
-  { date: todayStr(-2), recorder: "陳課長", name: "王小明 (阿明)", desc: "因交通堵塞遲到15分鐘，已口頭提醒注意安全並提早出門。", note: "" },
-  { date: todayStr(-3), recorder: "林主任", name: "蘇帝諾 (Sutino)", desc: "積極協助新進同仁適應產線操作環境，表現積極負責。", note: "推薦納入優秀員工評估" },
-  { date: todayStr(-5), recorder: "張組長", name: "陳美玲 (Siti)", desc: "操作機台時未依規定佩戴防護手套，已現場予以糾正並要求改進。", note: "宣導安全防護規範" }
-];
 
 // ── 初始化 ──
 window.addEventListener("DOMContentLoaded", () => {
@@ -809,12 +659,11 @@ window.addEventListener("DOMContentLoaded", () => {
   if (savedTheme) {
     setTheme(savedTheme);
   } else {
-    // 預設跟隨系統主題
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setTheme(prefersDark ? "dark" : "light");
   }
 
-  // 初始化載入
+  // 初始化載入試算表連線
   initConnection();
 });
 
@@ -858,7 +707,6 @@ function initRoute() {
 
 // ── 切換/開啟新分頁 ──
 function openRecordsPage() {
-  // 取得目前無參數路徑，加入 view=records 後在新視窗開啟
   const cleanPath = window.location.protocol + "//" + window.location.host + window.location.pathname;
   window.open(cleanPath + "?view=records", "_blank");
 }
@@ -879,13 +727,12 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
-// ── 連線初始化偵測 ──
+// ── 連線初始化偵測與數據載入 ──
 async function initConnection() {
-  connectionMode = "cloud";
   updateConnectionUI("pending");
   
   try {
-    // 優先嘗試拉取雲端員工名冊，測試是否能穿透 iframe 沙盒限制
+    // 試圖拉取試算表中的員工名單
     const res = await fetch(`${GAS_URL}?action=getEmployees`, {
       method: "GET",
       mode: "cors",
@@ -894,9 +741,7 @@ async function initConnection() {
     const data = await res.json();
     
     if (data && data.employees) {
-      // 成功連通
-      connectionMode = "cloud";
-      updateConnectionUI("cloud");
+      updateConnectionUI("success");
       
       if (currentView === "form") {
         populateEmployeeSelect(data.employees);
@@ -904,18 +749,24 @@ async function initConnection() {
         loadRecords();
       }
     } else {
-      throw new Error("Empty data received");
+      throw new Error("No employee data received");
     }
   } catch (e) {
-    console.warn("Iframe 沙盒限制了 Google 安全重定向。自動切換至 [本地模擬模式]，避免網頁無法操作。", e);
-    // 自動降級切換至本地模式，確保預覽無阻
-    connectionMode = "local";
-    updateConnectionUI("local");
+    console.error("雲端連線失敗", e);
+    updateConnectionUI("error");
     
     if (currentView === "form") {
-      populateEmployeeSelect(DEMO_EMPLOYEES);
+      const sel = document.getElementById("fName");
+      sel.innerHTML = '<option value="">❌ 載入失敗，請重新整理頁面</option>';
+      showToast("無法取得雲端員工名單，請確認網路或重新整理頁面", "error");
     } else {
-      loadRecords();
+      const list = document.getElementById("records-list");
+      list.innerHTML = `
+        <div class="state-box">
+          <div class="state-icon">❌</div>
+          <p>無法取得歷史紀錄，請確認網路連線並重新整理頁面。</p>
+        </div>
+      `;
     }
   }
 }
@@ -924,77 +775,19 @@ async function initConnection() {
 function updateConnectionUI(state) {
   const badge = document.getElementById("connBadge");
   const text = document.getElementById("connBadgeText");
-  const noticeEl = document.getElementById("setupNotice");
   
   if (state === "pending") {
-    badge.className = "conn-badge local";
-    text.textContent = "正在測試雲端連線...";
-    
-    noticeEl.className = "setup-notice warning";
-    noticeEl.innerHTML = `
-      <strong>🔗 連線偵測中：</strong>
-      <span>系統正在嘗試與您的 Google 試算表雲端資料庫進行同步...</span>
-    `;
+    badge.className = "conn-badge pending";
+    text.textContent = "🟡 雲端連線中...";
   }
-  else if (state === "cloud") {
+  else if (state === "success") {
     badge.className = "conn-badge cloud";
-    text.textContent = "雲端同步中";
-    
-    noticeEl.className = "setup-notice demo";
-    noticeEl.style.backgroundColor = "var(--success-bg)";
-    noticeEl.style.color = "var(--success)";
-    if (currentView === "records") {
-      noticeEl.innerHTML = `
-        <strong>📋 雲端歷史紀錄頁面：</strong>
-        <span>已完美同步 Google 試算表唯讀紀錄。您點擊右上角「📝 新增紀錄」可另開登記頁面。</span>
-      `;
-    } else {
-      noticeEl.innerHTML = `
-        <strong>📝 雲端狀況登記頁面：</strong>
-        <span>網頁已完美與 Google 試算表雙向串接。您點擊右上角「📋 歷史紀錄」可於新頁面查看列表。</span>
-      `;
-    }
-    setTimeout(() => {
-      noticeEl.style.opacity = "0";
-      setTimeout(() => noticeEl.style.display = "none", 300);
-    }, 5000);
+    text.textContent = "🟢 雲端已連線";
   }
-  else if (state === "local") {
-    badge.className = "conn-badge local";
-    text.textContent = "本地模擬測試";
-    
-    noticeEl.className = "setup-notice warning";
-    noticeEl.style.backgroundColor = "var(--warn-bg)";
-    noticeEl.style.color = "var(--warn)";
-    
-    let noticeHTML = `<strong>💡 已自動啟用「本地模擬模式」：</strong>`;
-    if (currentView === "records") {
-      noticeHTML += `
-        <span>因為預覽視窗限制了跨域連線。此頁面為「歷史紀錄列表」（資料儲存於瀏覽器暫存）。</span>
-        <span style="display:block; margin-top:4px;">📥 <b>部署後：</b>上傳至 GitHub 即可完美對接您的雲端 Google 試算表！</span>
-      `;
-    } else {
-      noticeHTML += `
-        <span>因為預覽視窗限制了跨域連線。此頁面為「新增狀況紀錄頁面」，您可以点击右上角「📋 歷史紀錄」另開新視窗。</span>
-        <span style="display:block; margin-top:4px;">📥 <b>部署後：</b>上傳至 GitHub 即可完美對接您的雲端 Google 試算表！</span>
-      `;
-    }
-    noticeEl.innerHTML = noticeHTML;
+  else if (state === "error") {
+    badge.className = "conn-badge error";
+    text.textContent = "🔴 連線失敗（請重新整理）";
   }
-}
-
-// ── 強制重試雲端連線 ──
-function forceCloudRetry() {
-  closeConnModal();
-  initConnection();
-}
-
-// ── Modal 互動 ──
-function openConnModal() {
-  document.getElementById("connModal").classList.add("open");
-}
-function closeConnModal() {
-  document.getElementById("connModal").classList.remove("open");
 }
 
 // ── 主題切換 ──
@@ -1025,7 +818,7 @@ function populateEmployeeSelect(employees) {
   if (employees.length === 0) {
     const opt = document.createElement("option");
     opt.value = "";
-    opt.textContent = "⚠️ 請先至試算表「員工清單」分頁填寫名冊";
+    opt.textContent = "⚠️ 試算表「員工清單」分頁中沒有任何姓名資料";
     sel.appendChild(opt);
     return;
   }
@@ -1033,7 +826,7 @@ function populateEmployeeSelect(employees) {
   employees.forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
-    opt.textContent = (connectionMode === "local" ? "💡 [模擬名單] " : "") + name;
+    opt.textContent = name;
     sel.appendChild(opt);
   });
 }
@@ -1055,25 +848,6 @@ async function submitRecord() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> 正在送出紀錄…';
 
-  if (connectionMode === "local") {
-    // 本地模擬模式：將新紀錄儲存到 localStorage
-    setTimeout(() => {
-      const localRecords = JSON.parse(localStorage.getItem("demo_records") || JSON.stringify(DEFAULT_DEMO_RECORDS));
-      localRecords.unshift({ date, recorder, name, desc, note });
-      localStorage.setItem("demo_records", JSON.stringify(localRecords));
-      
-      showToast("（本地模擬）紀錄已成功儲存！");
-      resetForm();
-      
-      // 如果本頁包含 recordsCard 則重載列表
-      if (document.getElementById("recordsCard").style.display !== "none") {
-        loadRecords();
-      }
-    }, 600);
-    return;
-  }
-
-  // 雲端實時同步模式
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
@@ -1086,14 +860,11 @@ async function submitRecord() {
     if (data.success) {
       showToast("紀錄已成功同步至試算表雲端！");
       resetForm();
-      if (document.getElementById("recordsCard").style.display !== "none") {
-        loadRecords();
-      }
     } else {
       showToast(data.message || "送出失敗，請重試", "error");
     }
   } catch (e) {
-    showToast("同步出錯，已暫存於本地。請確認您的網址或在無痕視窗開啟", "error");
+    showToast("同步失敗，請確認您的網路連線或稍後再試", "error");
     console.error(e);
   } finally {
     btn.disabled = false;
@@ -1114,25 +885,8 @@ async function loadRecords() {
   const btn = document.getElementById("refreshBtn");
   btn.classList.add("spinning");
   const list = document.getElementById("records-list");
-  list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>紀錄安全讀取中…</p></div>`;
+  list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>紀錄讀取中…</p></div>`;
 
-  if (connectionMode === "local") {
-    // 本地模擬模式
-    setTimeout(() => {
-      const localRecords = localStorage.getItem("demo_records");
-      if (!localRecords) {
-        localStorage.setItem("demo_records", JSON.stringify(DEFAULT_DEMO_RECORDS));
-        allRecords = [...DEFAULT_DEMO_RECORDS];
-      } else {
-        allRecords = JSON.parse(localRecords);
-      }
-      filterRecords();
-      btn.classList.remove("spinning");
-    }, 400);
-    return;
-  }
-
-  // 雲端同步讀取模式
   try {
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
@@ -1143,11 +897,14 @@ async function loadRecords() {
     allRecords = (data.records || []).reverse();
     filterRecords();
   } catch (e) {
-    console.error("雲端讀取失敗，降級本地快取", e);
-    // 發生錯誤，自動 fallback 回 local 模式載入，防止畫面破壞
-    connectionMode = "local";
-    updateConnectionUI("local");
-    loadRecords();
+    console.error("雲端讀取歷史紀錄失敗", e);
+    list.innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">❌</div>
+        <p>讀取失敗，請確認網路連線並重新整理頁面。</p>
+      </div>
+    `;
+    showToast("無法載入雲端數據", "error");
   } finally {
     btn.classList.remove("spinning");
   }
@@ -1174,7 +931,7 @@ function renderPage() {
   const total = filteredRecords.length;
 
   if (total === 0) {
-    list.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><p>目前沒有符合的狀況紀錄</p></div>`;
+    list.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><p>目前沒有符合的歷史狀況紀錄</p></div>`;
     document.getElementById("pagination").innerHTML = "";
     return;
   }
@@ -1199,7 +956,7 @@ function renderPage() {
     }
 
     return `
-      <div class="record-item" style="${connectionMode === "local" ? "border-color: var(--warn); background: rgba(245,158,11,0.01);" : ""}">
+      <div class="record-item">
         <div class="record-date-badge">
           <span class="date-day">${day}</span>
           <span>${month} ${weekday}</span>
@@ -1207,7 +964,6 @@ function renderPage() {
         <div class="record-main">
           <div class="record-name">
             👤 員工: ${esc(r.name)}
-            ${connectionMode === "local" ? `<span style="font-size:10px; background:var(--warn-bg); color:var(--warn); padding:2px 8px; border-radius:100px; margin-left:6px; font-weight:700; border: 1px solid rgba(245,158,11,0.2)">本地模擬</span>` : ""}
             <span class="record-recorder">
               ✍️ 記錄人: ${esc(r.recorder || "系統")}
             </span>
