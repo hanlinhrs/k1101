@@ -96,6 +96,28 @@
     align-items: center;
     gap: 12px;
   }
+
+  /* ── NAV BUTTON ── */
+  .nav-btn {
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    transition: all 0.2s ease;
+  }
+  .nav-btn:hover {
+    background: var(--accent);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
   
   /* ── CONNECTION BADGE ── */
   .conn-badge {
@@ -168,6 +190,7 @@
     box-shadow: var(--shadow);
     overflow: hidden;
     transition: border-color 0.3s;
+    display: none; /* 路由初始化前先隱藏 */
   }
   .card-header {
     padding: 20px 24px 16px;
@@ -460,7 +483,7 @@
     font-size: 13px;
     font-weight: 700;
     display: flex;
-    align-items: center justify-content: center;
+    align-items: center; justify-content: center;
     padding: 0 12px;
     transition: all 0.2s ease;
   }
@@ -579,6 +602,7 @@
     header { padding: 0 16px; height: 60px; }
     .header-icon { width: 36px; height: 36px; font-size: 18px; }
     .header-title { font-size: 15px; }
+    .nav-btn { padding: 6px 12px; font-size: 12px; }
     main { padding: 16px 12px 40px; gap: 16px; }
     .card-header { padding: 16px 20px 12px; }
     .card-body { padding: 16px; }
@@ -610,11 +634,15 @@
   <div class="header-left">
     <div class="header-icon">👷</div>
     <div>
-      <div class="header-title">移工工作狀況紀錄</div>
-      <div class="header-sub">Worker Status Tracker</div>
+      <div class="header-title" id="pageTitle">移工工作狀況紀錄</div>
+      <div class="header-sub" id="pageSub">Worker Status Tracker</div>
     </div>
   </div>
   <div class="header-right">
+    <!-- 頁面切換按鈕 -->
+    <button id="viewRecordsBtn" class="nav-btn" onclick="openRecordsPage()" title="在新視窗開啟歷史紀錄">📋 歷史紀錄</button>
+    <button id="viewFormBtn" class="nav-btn" onclick="openFormPage()" title="在新視窗開啟新增登記" style="display:none;">📝 新增紀錄</button>
+    
     <!-- Connection Status Badge -->
     <div id="connBadge" class="conn-badge local" onclick="openConnModal()">
       <span class="conn-dot"></span>
@@ -631,8 +659,8 @@
     <!-- Will be dynamically populated by JS -->
   </div>
 
-  <!-- Form Card -->
-  <div class="card">
+  <!-- Form Card (新增紀錄頁面) -->
+  <div class="card" id="formCard">
     <div class="card-header">
       <span class="card-header-icon">📝</span>
       <div class="card-header-text">
@@ -671,13 +699,13 @@
     </div>
   </div>
 
-  <!-- Records Card -->
-  <div class="card">
+  <!-- Records Card (獨立歷史紀錄頁面) -->
+  <div class="card" id="recordsCard">
     <div class="card-header">
       <span class="card-header-icon">📋</span>
       <div class="card-header-text">
-        <h2>歷史紀錄</h2>
-        <p>即時同步的紀錄列表</p>
+        <h2>狀況歷史紀錄列表</h2>
+        <p>即時串接試算表的雲端唯讀紀錄列表</p>
       </div>
     </div>
     <div class="card-body">
@@ -739,6 +767,9 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz3jS4meTG_xDAbrPI5fh_uqEBFEFlwq3fagd4ziqdJ4C_5Anb_cixm8TqoEnGu50Rjng/exec";
 // ════════════════════════════════════════════════════════════
 
+// 當前頁面模式，預設 "form" (填寫模式)，另有 "records" (歷史紀錄模式)
+let currentView = "form";
+
 // 當前連線模式，預設嘗試 "cloud"，失敗時自動轉為 "local" 確保網頁功能正常
 let connectionMode = "cloud";
 
@@ -767,6 +798,9 @@ const DEFAULT_DEMO_RECORDS = [
 
 // ── 初始化 ──
 window.addEventListener("DOMContentLoaded", () => {
+  // 1. 初始化頁面路由與可視範圍
+  initRoute();
+
   // 設定預設日期為今天
   document.getElementById("fDate").value = todayStr();
   
@@ -783,6 +817,56 @@ window.addEventListener("DOMContentLoaded", () => {
   // 初始化載入
   initConnection();
 });
+
+// ── 判斷目前應該渲染哪一個頁面 ──
+function initRoute() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const view = urlParams.get('view');
+  
+  const formCard = document.getElementById("formCard");
+  const recordsCard = document.getElementById("recordsCard");
+  const viewRecordsBtn = document.getElementById("viewRecordsBtn");
+  const viewFormBtn = document.getElementById("viewFormBtn");
+  
+  const pageTitle = document.getElementById("pageTitle");
+  const pageSub = document.getElementById("pageSub");
+
+  if (view === 'records') {
+    currentView = "records";
+    formCard.style.display = "none";
+    recordsCard.style.display = "block";
+    viewRecordsBtn.style.display = "none";
+    viewFormBtn.style.display = "flex";
+    
+    // 調整頁面與標頭文字
+    document.title = "歷史紀錄列表 - 移工工作狀況紀錄系統";
+    pageTitle.textContent = "移工狀況歷史紀錄";
+    pageSub.textContent = "Worker Status History List";
+  } else {
+    currentView = "form";
+    formCard.style.display = "block";
+    recordsCard.style.display = "none";
+    viewRecordsBtn.style.display = "flex";
+    viewFormBtn.style.display = "none";
+    
+    // 還原預設標頭
+    document.title = "移工工作狀況紀錄系統";
+    pageTitle.textContent = "移工工作狀況紀錄";
+    pageSub.textContent = "Worker Status Tracker";
+  }
+}
+
+// ── 切換/開啟新分頁 ──
+function openRecordsPage() {
+  // 取得目前無參數路徑，加入 view=records 後在新視窗開啟
+  const cleanPath = window.location.protocol + "//" + window.location.host + window.location.pathname;
+  window.open(cleanPath + "?view=records", "_blank");
+}
+
+function openFormPage() {
+  const cleanPath = window.location.protocol + "//" + window.location.host + window.location.pathname;
+  window.open(cleanPath, "_blank");
+}
 
 function todayStr(offsetDays = 0) {
   const d = new Date();
@@ -813,8 +897,12 @@ async function initConnection() {
       // 成功連通
       connectionMode = "cloud";
       updateConnectionUI("cloud");
-      populateEmployeeSelect(data.employees);
-      loadRecords();
+      
+      if (currentView === "form") {
+        populateEmployeeSelect(data.employees);
+      } else {
+        loadRecords();
+      }
     } else {
       throw new Error("Empty data received");
     }
@@ -823,8 +911,12 @@ async function initConnection() {
     // 自動降級切換至本地模式，確保預覽無阻
     connectionMode = "local";
     updateConnectionUI("local");
-    populateEmployeeSelect(DEMO_EMPLOYEES);
-    loadRecords();
+    
+    if (currentView === "form") {
+      populateEmployeeSelect(DEMO_EMPLOYEES);
+    } else {
+      loadRecords();
+    }
   }
 }
 
@@ -851,14 +943,21 @@ function updateConnectionUI(state) {
     noticeEl.className = "setup-notice demo";
     noticeEl.style.backgroundColor = "var(--success-bg)";
     noticeEl.style.color = "var(--success)";
-    noticeEl.innerHTML = `
-      <strong>💚 雲端同步連線成功：</strong>
-      <span>網頁已完美與 Google 試算表雙向串接。填寫名冊、狀況與歷史紀錄已即時更新。</span>
-    `;
+    if (currentView === "records") {
+      noticeEl.innerHTML = `
+        <strong>📋 雲端歷史紀錄頁面：</strong>
+        <span>已完美同步 Google 試算表唯讀紀錄。您點擊右上角「📝 新增紀錄」可另開登記頁面。</span>
+      `;
+    } else {
+      noticeEl.innerHTML = `
+        <strong>📝 雲端狀況登記頁面：</strong>
+        <span>網頁已完美與 Google 試算表雙向串接。您點擊右上角「📋 歷史紀錄」可於新頁面查看列表。</span>
+      `;
+    }
     setTimeout(() => {
       noticeEl.style.opacity = "0";
       setTimeout(() => noticeEl.style.display = "none", 300);
-    }, 4000);
+    }, 5000);
   }
   else if (state === "local") {
     badge.className = "conn-badge local";
@@ -867,11 +966,20 @@ function updateConnectionUI(state) {
     noticeEl.className = "setup-notice warning";
     noticeEl.style.backgroundColor = "var(--warn-bg)";
     noticeEl.style.color = "var(--warn)";
-    noticeEl.innerHTML = `
-      <strong>💡 已自動啟用「本地模擬模式」：</strong>
-      <span>因為當前的預覽視窗限制了跨域安全連線。<b>這不影響功能測試！</b>您可以直接在此新增、搜尋（資料儲存於瀏覽器暫存）。</span>
-      <span style="display:block; margin-top:4px;">📥 <b>正式使用：</b>請下載本網頁 (index.html) 到您的電腦上，直接點擊開啟即可秒速對接您的 Google 雲端試算表！</span>
-    `;
+    
+    let noticeHTML = `<strong>💡 已自動啟用「本地模擬模式」：</strong>`;
+    if (currentView === "records") {
+      noticeHTML += `
+        <span>因為預覽視窗限制了跨域連線。此頁面為「歷史紀錄列表」（資料儲存於瀏覽器暫存）。</span>
+        <span style="display:block; margin-top:4px;">📥 <b>部署後：</b>上傳至 GitHub 即可完美對接您的雲端 Google 試算表！</span>
+      `;
+    } else {
+      noticeHTML += `
+        <span>因為預覽視窗限制了跨域連線。此頁面為「新增狀況紀錄頁面」，您可以点击右上角「📋 歷史紀錄」另開新視窗。</span>
+        <span style="display:block; margin-top:4px;">📥 <b>部署後：</b>上傳至 GitHub 即可完美對接您的雲端 Google 試算表！</span>
+      `;
+    }
+    noticeEl.innerHTML = noticeHTML;
   }
 }
 
@@ -925,7 +1033,6 @@ function populateEmployeeSelect(employees) {
   employees.forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
-    // 如果是本地模擬，加上黃色 [模擬] 前綴
     opt.textContent = (connectionMode === "local" ? "💡 [模擬名單] " : "") + name;
     sel.appendChild(opt);
   });
@@ -957,7 +1064,11 @@ async function submitRecord() {
       
       showToast("（本地模擬）紀錄已成功儲存！");
       resetForm();
-      loadRecords();
+      
+      // 如果本頁包含 recordsCard 則重載列表
+      if (document.getElementById("recordsCard").style.display !== "none") {
+        loadRecords();
+      }
     }, 600);
     return;
   }
@@ -975,7 +1086,9 @@ async function submitRecord() {
     if (data.success) {
       showToast("紀錄已成功同步至試算表雲端！");
       resetForm();
-      loadRecords();
+      if (document.getElementById("recordsCard").style.display !== "none") {
+        loadRecords();
+      }
     } else {
       showToast(data.message || "送出失敗，請重試", "error");
     }
@@ -1129,7 +1242,7 @@ function goPage(p) {
   if (p < 1 || p > totalPages) return;
   currentPage = p;
   renderPage();
-  document.querySelector(".card:last-of-type").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("recordsCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function esc(s) {
