@@ -477,7 +477,7 @@
     font-size: 13px;
     font-weight: 700;
     display: flex;
-    align-items: center justify-content: center;
+    align-items: center; justify-content: center;
     padding: 0 12px;
     transition: all 0.2s ease;
   }
@@ -557,6 +557,41 @@
   .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .modal-btn.secondary:hover { background: var(--border); }
 
+  /* ── EMPLOYEE LIST ITEM ── */
+  .emp-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s;
+  }
+  .emp-item:last-child {
+    margin-bottom: 0;
+  }
+  .emp-name-text {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .emp-delete-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .emp-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.1);
+  }
+
   /* ── MOBILE ── */
   @media (max-width: 480px) {
     header { padding: 0 16px; height: 60px; }
@@ -634,9 +669,13 @@
         </div>
         <div class="form-group">
           <label>員工姓名 <span class="required">*</span></label>
-          <select id="fName" required>
-            <option value="">— 員工名單載入中... —</option>
-          </select>
+          <!-- 調整為 flex 版面並加上「⚙️ 管理」按鈕 -->
+          <div style="display: flex; gap: 8px;">
+            <select id="fName" required style="flex: 1;">
+              <option value="">— 請選擇員工 —</option>
+            </select>
+            <button type="button" class="nav-btn" onclick="openEmployeeModal()" style="padding: 0 14px; height: 46px; flex-shrink: 0;" title="點擊新增或刪除員工名單">⚙️ 管理</button>
+          </div>
         </div>
         <div class="form-group full">
           <label>狀況說明 <span class="required">*</span></label>
@@ -666,7 +705,7 @@
       <div class="records-toolbar">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="搜尋填寫人、員工姓名、狀況說明或備註…" oninput="filterRecords()">
+          <input type="text" id="searchInput" placeholder="搜尋填寫人、員工姓名、狀況說明 or 備註…" oninput="filterRecords()">
         </div>
         <button class="refresh-btn" onclick="loadRecords()" id="refreshBtn">
           <span class="spin-icon">🔄</span> 重新整理
@@ -685,6 +724,36 @@
   </div>
 
 </main>
+
+<!-- 👥 員工名單本機管理視窗 (新增 Modal) -->
+<div id="employeeModal" class="modal-overlay" onclick="closeEmployeeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>👥 員工名單管理</h3>
+      <button class="modal-close" onclick="closeEmployeeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 12px; font-size: 13px; color: var(--text2);">名單直接保存在此瀏覽器，無需與 Google 試算表同步名單：</p>
+      
+      <!-- 新增員工欄位 -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <input type="text" id="newEmpName" placeholder="輸入要新增的員工姓名..." style="font-size: 14px; padding: 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text);">
+        <button class="nav-btn" onclick="addEmployee()" style="flex-shrink: 0; background: var(--accent); color: white; border: none; padding: 0 16px; border-radius: var(--radius-sm); font-weight: bold;">➕ 新增</button>
+      </div>
+
+      <!-- 員工名單列表 -->
+      <div style="border: 1.5px solid var(--border); border-radius: var(--radius-sm); max-height: 250px; overflow-y: auto; background: var(--surface2); padding: 8px;">
+        <ul id="employeeListUI" style="list-style: none; padding: 0; margin: 0;">
+          <!-- 動態繪製員工項目 -->
+        </ul>
+      </div>
+
+      <div class="modal-btn-group" style="margin-top: 20px;">
+        <button class="modal-btn primary" onclick="closeEmployeeModal()">完成並套用</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Connection Info Modal (診斷與排查助手) -->
 <div id="connModal" class="modal-overlay" onclick="closeConnModal()">
@@ -745,6 +814,10 @@ const RECORDS_PER_PAGE = 10;
 let allRecords = [];
 let filteredRecords = [];
 let currentPage = 1;
+
+// ── 本地員工名單 ──
+let employeeList = [];
+const DEFAULT_EMPLOYEES = ["阿米爾 (Amir)", "阮氏香 (Nguyen)", "索帝雅诺 (Sotiano)", "陳莉娜 (Lina)"];
 
 // ── 初始化 ──
 window.addEventListener("DOMContentLoaded", () => {
@@ -824,39 +897,38 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
-// ── 連線初始化偵測與數據載入 ──
+// ── 本地名單載入與雲端連線偵測 ──
 async function initConnection() {
+  // 1. 立即從本機緩存加載員工名冊，極速響應！不需等待 Google 試算表。
+  loadEmployees();
+  
   updateConnectionUI("pending");
   
   try {
-    // 試圖拉取試算表中的員工名單
-    const res = await fetch(`${GAS_URL}?action=getEmployees`, {
+    // 2. 僅作背景連線健康度探測，抓取唯讀歷史紀錄確認 CORS 的健康狀態
+    const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
       mode: "cors",
       redirect: "follow"
     });
-    const data = await res.json();
     
-    if (data && data.employees) {
+    if (res.ok) {
       updateConnectionUI("success");
       
-      if (currentView === "form") {
-        populateEmployeeSelect(data.employees);
-      } else {
-        loadRecords();
+      // 如果本頁面是唯讀的歷史紀錄頁面，立刻為其渲染清單
+      if (currentView === "records") {
+        const data = await res.json();
+        allRecords = (data.records || []).reverse();
+        filterRecords();
       }
     } else {
-      throw new Error("No employee data received");
+      throw new Error("CORS or Connection check failed");
     }
   } catch (e) {
-    console.error("雲端連線失敗", e);
+    console.error("雲端連線測試失敗", e);
     updateConnectionUI("error");
     
-    if (currentView === "form") {
-      const sel = document.getElementById("fName");
-      sel.innerHTML = '<option value="">❌ 載入失敗，請點選右上角紅燈排查連線</option>';
-      showToast("無法取得雲端員工名單，請點右上角燈號進行連線排查", "error");
-    } else {
+    if (currentView === "records") {
       const list = document.getElementById("records-list");
       list.innerHTML = `
         <div class="state-box">
@@ -866,6 +938,100 @@ async function initConnection() {
       `;
     }
   }
+}
+
+// ── 員工名單本機管理邏輯 ──
+function loadEmployees() {
+  const localData = localStorage.getItem("employee_list");
+  if (localData) {
+    employeeList = JSON.parse(localData);
+  } else {
+    // 若本機尚未有任何名單，預載範例預設名單
+    employeeList = [...DEFAULT_EMPLOYEES];
+    localStorage.setItem("employee_list", JSON.stringify(employeeList));
+  }
+  populateEmployeeSelect(employeeList);
+}
+
+function saveEmployees() {
+  localStorage.setItem("employee_list", JSON.stringify(employeeList));
+  populateEmployeeSelect(employeeList);
+  renderEmployeeListUI();
+}
+
+function populateEmployeeSelect(list) {
+  const sel = document.getElementById("fName");
+  sel.innerHTML = '<option value="">— 請選擇員工 —</option>';
+  
+  if (list.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "⚠️ 請點右側 [⚙️ 管理] 新增員工";
+    sel.appendChild(opt);
+    return;
+  }
+
+  list.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function renderEmployeeListUI() {
+  const listUI = document.getElementById("employeeListUI");
+  if (employeeList.length === 0) {
+    listUI.innerHTML = `
+      <li style="text-align: center; color: var(--text2); padding: 16px; font-size: 13.5px; font-weight: bold;">
+        📭 目前沒有任何員工。請在上方輸入姓名並新增！
+      </li>
+    `;
+    return;
+  }
+
+  listUI.innerHTML = employeeList.map((emp, index) => `
+    <li class="emp-item">
+      <span class="emp-name-text">👤 ${esc(emp)}</span>
+      <button class="emp-delete-btn" onclick="deleteEmployee(${index})" title="刪除此員工">🗑️</button>
+    </li>
+  `).join("");
+}
+
+function addEmployee() {
+  const input = document.getElementById("newEmpName");
+  const name = input.value.trim();
+  
+  if (!name) {
+    showToast("請輸入員工姓名", "error");
+    return;
+  }
+  if (employeeList.includes(name)) {
+    showToast("此姓名已存在於清單中", "error");
+    return;
+  }
+
+  employeeList.push(name);
+  saveEmployees();
+  input.value = "";
+  showToast(`已成功新增員工「${name}」！`);
+}
+
+function deleteEmployee(index) {
+  const removedName = employeeList[index];
+  employeeList.splice(index, 1);
+  saveEmployees();
+  showToast(`已刪除「${removedName}」`, "success");
+}
+
+function openEmployeeModal() {
+  document.getElementById("employeeModal").classList.add("open");
+  renderEmployeeListUI();
+  document.getElementById("newEmpName").focus();
+}
+
+function closeEmployeeModal() {
+  document.getElementById("employeeModal").classList.remove("open");
 }
 
 // ── 更新頂部狀態指示 ──
@@ -920,23 +1086,23 @@ async function testTempUrl() {
   resultEl.textContent = "⏳ 正在與該網址建立測試連線，請稍候...";
 
   try {
-    const res = await fetch(`${url}?action=getEmployees`, {
+    const res = await fetch(`${url}?action=getRecords`, {
       method: "GET",
       mode: "cors",
       redirect: "follow"
     });
     const data = await res.json();
     
-    if (data && data.employees) {
+    if (data && data.records) {
       resultEl.style.background = "var(--success-bg)";
       resultEl.style.color = "var(--success)";
       resultEl.innerHTML = `
         🎉 連線測試成功！<br>
-        您設定的這組新 GAS 權限完全正確，且能成功抓取名單。<br>
+        您設定的這組新 GAS 權限完全正確，且能成功串接試算表。<br>
         <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 6px; color: var(--text2); line-height: 1.5;">
           👉 <b>修復步驟：</b><br>
           1. 複製此網址，用編輯器打開您的 <code>index.html</code>。<br>
-          2. 找到第 481 行的 <code>const GAS_URL = "...";</code> 並置換為此網址。<br>
+          2. 找到程式碼中的 <code>const GAS_URL = "...";</code> 並置換為此網址。<br>
           3. 重新 Commit & Push 上傳至您的 GitHub 儲存庫。<br>
           4. 等待 1 分鐘後重新整理本網頁，即可完美正常運作！
         </span>
@@ -978,27 +1144,6 @@ function showToast(msg, type = "success") {
   el.className = "show " + type;
   clearTimeout(el._timer);
   el._timer = setTimeout(() => { el.className = ""; }, 3000);
-}
-
-// ── 寫入員工名冊選單 ──
-function populateEmployeeSelect(employees) {
-  const sel = document.getElementById("fName");
-  sel.innerHTML = '<option value="">— 請選擇員工 —</option>';
-  
-  if (employees.length === 0) {
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "⚠️ 試算表「員工清單」分頁中沒有任何姓名資料";
-    sel.appendChild(opt);
-    return;
-  }
-
-  employees.forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
-  });
 }
 
 // ── 送出紀錄 ──
@@ -1117,11 +1262,9 @@ function renderPage() {
     let d = null;
 
     if (r.date) {
-      // 核心相容性修復：移除括號中文註記（如 台北標準時間），這在 Safari/iOS 等瀏覽器會解析出 NaN
       let cleanDateStr = String(r.date).replace(/\s*\(.*?\)\s*/g, "").trim();
       d = new Date(cleanDateStr);
       
-      // 相容性防錯備份方案（如果還是解析失敗，則採用 split 手動切分）
       if (isNaN(d.getTime())) {
         const parts = cleanDateStr.split("T")[0].split("-");
         if (parts.length === 3) {
@@ -1136,7 +1279,6 @@ function renderPage() {
       weekday = `週${["日","一","二","三","四","五","六"][d.getDay()]}`;
     }
 
-    // 格式化右下角日期為標準易讀格式 (YYYY-MM-DD)，且不顯示任何具體時間/時區
     let displayDate = "";
     if (d && !isNaN(d.getTime())) {
       const y = d.getFullYear();
@@ -1168,7 +1310,6 @@ function renderPage() {
     `;
   }).join("");
 
-  // 分頁器
   const pag = document.getElementById("pagination");
   if (totalPages <= 1) { pag.innerHTML = ""; return; }
 
