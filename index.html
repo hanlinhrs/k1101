@@ -202,6 +202,16 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: wrap;
+  }
+  .demo-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .demo-banner-actions {
+    display: flex;
+    gap: 8px;
   }
   .demo-banner button {
     background: var(--warn);
@@ -213,6 +223,9 @@
     font-size: 12px;
     font-weight: 800;
     transition: opacity 0.2s;
+  }
+  .demo-banner button.btn-reconnect {
+    background: var(--accent);
   }
   .demo-banner button:hover { opacity: 0.9; }
 
@@ -703,8 +716,13 @@
 
   <!-- Demo Mode Banner -->
   <div id="demoBanner" class="demo-banner">
-    <span>⚠️ 目前正處於「離線模擬展示模式」，資料將暫存於本機。</span>
-    <button onclick="openConnModal()">如何連接到雲端？</button>
+    <div class="demo-banner-left">
+      <span>⚠️ 目前正處於「離線模擬展示模式」，資料將暫存於本機。</span>
+    </div>
+    <div class="demo-banner-actions">
+      <button class="btn-reconnect" onclick="forceCheckConnection()" id="reconnectBannerBtn">🔄 嘗試連接雲端</button>
+      <button onclick="openConnModal()">如何連接？</button>
+    </div>
   </div>
 
   <!-- Form Card (新增紀錄頁面) -->
@@ -1023,6 +1041,30 @@ function enableDemoMode() {
   loadLocalRecords();
 }
 
+// ── 關閉並切換回雲端模式 ──
+function disableDemoMode() {
+  isDemoMode = false;
+  localStorage.removeItem("offline_demo_mode");
+  document.getElementById("demoBanner").style.display = "none";
+  showToast("已切換回雲端試算表連線模式！", "success");
+  initConnection();
+}
+
+// ── 點擊橫幅強制嘗試重新連線 ──
+async function forceCheckConnection() {
+  const btn = document.getElementById("reconnectBannerBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ 連線嘗試中...";
+  
+  localStorage.removeItem("offline_demo_mode");
+  isDemoMode = false;
+  
+  await initConnection();
+  
+  btn.disabled = false;
+  btn.textContent = "🔄 嘗試連接雲端";
+}
+
 // ── 載入本機端暫存紀錄 ──
 function loadLocalRecords() {
   const localRecs = localStorage.getItem("local_records_data");
@@ -1052,16 +1094,10 @@ async function initConnection() {
   // 1. 立即從本機緩存或範例名單加載員工，極速響應！
   loadEmployees();
   
-  if (isDemoMode) {
-    updateConnectionUI("local");
-    loadLocalRecords();
-    return;
-  }
-
   updateConnectionUI("pending");
   
   try {
-    // 2. 進行連線探測
+    // 2. 進行連線探測 (無論先前是不是離線模式，都趁現在新網址進來時主動測試重連！)
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
       mode: "cors",
@@ -1070,6 +1106,12 @@ async function initConnection() {
     
     if (res.ok) {
       const data = await res.json();
+      
+      // 連線成功！自動修復離線鎖定狀態
+      isDemoMode = false;
+      localStorage.removeItem("offline_demo_mode");
+      document.getElementById("demoBanner").style.display = "none";
+      
       updateConnectionUI("success");
 
       // 3. 背景自動更新員工緩存並重繪選單
@@ -1093,11 +1135,10 @@ async function initConnection() {
       throw new Error("CORS or Connection check failed");
     }
   } catch (e) {
-    console.error("雲端連線測試失敗", e);
+    console.warn("目前無法與雲端建立連線，將維持/切換至本地模擬模式", e);
     
-    // 連線失敗，自動無縫切換到本機模擬模式！
+    // 連線失敗，保持或切換到本機模擬模式！
     isDemoMode = true;
-    localStorage.setItem("offline_demo_mode", "true");
     document.getElementById("demoBanner").style.display = "flex";
     updateConnectionUI("local");
     loadLocalRecords();
