@@ -105,6 +105,7 @@
     gap: 6px;
     font-size: 13.5px;
     transition: all 0.2s ease;
+    text-decoration: none;
   }
   .nav-btn:hover {
     background: var(--accent);
@@ -134,6 +135,12 @@
     background: rgba(239, 68, 68, 0.1);
     color: var(--danger);
     border-color: rgba(239, 68, 68, 0.2);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+    100% { transform: scale(1); }
   }
   .conn-badge.cloud {
     background: var(--success-bg);
@@ -461,6 +468,7 @@
     background: rgba(239, 68, 68, 0.04);
     border: 1.5px dashed rgba(239, 68, 68, 0.2);
     border-radius: var(--radius);
+    padding: 30px 20px;
   }
 
   /* ── PAGINATION ── */
@@ -548,7 +556,7 @@
   .modal-alert-box {
     background: rgba(239, 68, 68, 0.05);
     color: var(--danger);
-    padding: 12px 16px;
+    padding: 14px 18px;
     border-radius: var(--radius-sm);
     margin: 12px 0;
     border-left: 4px solid var(--danger);
@@ -591,9 +599,12 @@
   }
   .modal-btn {
     flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
   }
   .modal-btn.primary { background: var(--accent); color: #fff; }
   .modal-btn.primary:hover { background: var(--accent-hover); }
+  .modal-btn.danger-btn { background: #E11D48; color: #fff; }
+  .modal-btn.danger-btn:hover { background: #BE123C; }
   .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .modal-btn.secondary:hover { background: var(--border); }
 
@@ -735,11 +746,20 @@
     </div>
     <div class="modal-body">
       <div class="modal-alert-box">
-        <strong>❌ 連線異常提示：網頁目前無法讀取後端資料</strong><br>
-        通常是由於 GAS 網頁應用程式部署設定中，<strong>「誰有權限存取」</strong>未選擇為<strong>「任何人」</strong>，或是試算表 ID 設定錯誤。
+        <strong>⚡ 核心關鍵：為什麼連線失敗？</strong><br>
+        1. **「尚未同意 Google 授權」**：您的 Google 帳戶在背景拒絕了連線，您需要手動「喚醒」並核准它。<br>
+        2. **「權限設定不全」**：部署設定中，誰有權限存取 (Who has access) 沒有選擇為<strong>「任何人 (Anyone)」</strong>。
+      </div>
+
+      <div style="background: var(--accent-light); color: var(--accent); padding: 14px; border-radius: var(--radius-sm); border: 1.5px solid rgba(37,99,235,0.2); margin-bottom: 20px; text-align: center;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">🚀 解決方案 A：直接在新分頁啟用授權（最推薦）</h4>
+        <p style="font-size: 12.5px; margin-bottom: 12px; color: var(--text2); line-height: 1.4;">點擊下方按鈕，Google 會立刻彈出授權同意畫面。請一路點選「進階」➡️「允許授權」。看到 JSON 格式的文字後關閉該分頁，重新整理此網頁即可連線成功！</p>
+        <a id="modalDirectLink" href="#" target="_blank" class="modal-btn primary" style="padding: 10px 20px; display: inline-flex; gap: 6px; font-weight: bold; width: auto; font-size: 13.5px;">
+          🔓 點我直接在新分頁啟用授權
+        </a>
       </div>
       
-      <h4>🛠️ 終極排查與設定指引：</h4>
+      <h4>🛠️ 解決方案 B：核對後端 Apps Script 部署設定：</h4>
       
       <h4>第一步：確認您 Google 試算表上的工作表名稱</h4>
       <p style="font-size: 13px; margin-bottom: 6px;">請確保您的試算表左下角包含完全一致的兩個分頁：</p>
@@ -749,7 +769,7 @@
       </ul>
 
       <h4>第二步：使用對齊的正式 Apps Script 程式碼</h4>
-      <p style="font-size: 13px; margin-bottom: 6px;">請完整複製下方代碼，覆蓋覆蓋貼上您的 Google Apps Script 編輯器，存檔後進行部署：</p>
+      <p style="font-size: 13px; margin-bottom: 6px;">請完整複製下方代碼，覆蓋貼上您的 Google Apps Script 編輯器，存檔後進行部署：</p>
       
       <!-- 程式碼複製區 -->
       <div class="code-container">
@@ -929,6 +949,9 @@ window.addEventListener("DOMContentLoaded", () => {
     setTheme(prefersDark ? "dark" : "light");
   }
 
+  // 設定診斷視窗中的直接啟用連結
+  document.getElementById("modalDirectLink").href = `${GAS_URL}?action=getRecords`;
+
   // 初始化載入試算表連線
   initConnection();
 });
@@ -1039,11 +1062,19 @@ function handleConnectionError(errMsg) {
     list.innerHTML = `
       <div class="state-box error-state">
         <div class="state-icon">🔌</div>
-        <p style="color: var(--danger);">無法與 Google Apps Script 建立連線</p>
-        <p style="font-size:12.5px; margin-top:8px; font-weight:normal; color: var(--text2);">
-          細節：${errMsg || "網路連線異常或跨網域 (CORS) 權限阻擋"}。請點選右上角紅燈排查，或是確認您的 Google Apps Script 已將存取權限設為「任何人 (Anyone)」。
+        <p style="color: var(--danger); font-size: 16px; font-weight: 800;">無法與 Google 雲端建立安全連線</p>
+        <p style="font-size:12.5px; margin-top:8px; font-weight:normal; color: var(--text2); line-height: 1.5;">
+          細節原因：您的 Google 試算表尚未對外開啟存取授權，或目前的連線被安全防火牆阻擋。<br>
+          通常只需手動點擊下方按鈕核准一次授權，即可完美修復！
         </p>
-        <button class="nav-btn" onclick="openConnModal()" style="margin: 16px auto 0; background: var(--accent); color: white; border: none; display: flex;">診斷與排查助手</button>
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 18px auto 0;">
+          <a href="${GAS_URL}?action=getRecords" target="_blank" class="modal-btn danger-btn" style="text-decoration: none; padding: 10px 18px; font-size: 13px;">
+            🔓 點此在新分頁直接啟用授權
+          </a>
+          <button class="nav-btn" onclick="openConnModal()" style="background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); width: 100%; display: flex; justify-content: center; font-size: 13px;">
+            🔍 開啟排查與手動設定指引
+          </button>
+        </div>
       </div>
     `;
     const pag = document.getElementById("pagination");
