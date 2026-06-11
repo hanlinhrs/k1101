@@ -162,7 +162,7 @@
     background: var(--surface);
     color: var(--text);
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex align-items: center; justify-content: center;
     font-size: 18px;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -180,6 +180,49 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
+  }
+
+  /* ── SANDBOX WARNING BANNER ── */
+  .sandbox-banner {
+    background: #EFF6FF;
+    border: 1.5px dashed #3B82F6;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .sandbox-banner-text {
+    font-size: 14px;
+    color: #1E40AF;
+    line-height: 1.6;
+  }
+  .sandbox-banner-text strong {
+    color: #2563EB;
+    font-weight: 800;
+  }
+  .sandbox-btn {
+    background: #2563EB;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+  }
+  .sandbox-btn:hover {
+    background: #1D4ED8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
   }
 
   /* ── CARD ── */
@@ -664,6 +707,17 @@
 
 <main>
 
+  <!-- Sandbox Active Alert Banner (偵測到沙盒環境時自動顯示) -->
+  <div id="sandboxAlertBanner" class="sandbox-banner" style="display: none;">
+    <div class="sandbox-banner-text">
+      <strong>💡 溫馨提示：</strong>您目前正在 <strong>AI 預覽視窗（沙盒環境）</strong> 中測試。
+      瀏覽器會因為跨網域安全保護，擋下與 Google apps script 的連線。請點右側按鈕在「獨立新分頁」中打開，即可亮起綠燈完美連線！
+    </div>
+    <button class="sandbox-btn" onclick="escapeSandbox()">
+      🚀 獨立分頁開啟
+    </button>
+  </div>
+
   <!-- Form Card (新增紀錄頁面) -->
   <div class="card" id="formCard">
     <div class="card-header">
@@ -745,31 +799,34 @@
       <button class="modal-close" onclick="closeConnModal()">×</button>
     </div>
     <div class="modal-body">
-      <div class="modal-alert-box">
-        <strong>⚡ 核心關鍵：為什麼連線失敗？</strong><br>
-        1. **「尚未同意 Google 授權」**：您的 Google 帳戶在背景拒絕了連線，您需要手動「喚醒」並核准它。<br>
-        2. **「權限設定不全」**：部署設定中，誰有權限存取 (Who has access) 沒有選擇為<strong>「任何人 (Anyone)」</strong>。
+      <div class="modal-alert-box" style="background: rgba(59,130,246,0.06); color: #2563EB; border-left: 4px solid #2563EB;">
+        <strong>🌍 獨立分頁檢測：這是最常見的「假連線失敗」！</strong><br>
+        只要你目前是在 AI 預覽視窗內，瀏覽器基於安全性一定會擋下外部 API。
+        請立刻點選下方藍色按鈕在獨立頁面中開啟，便能正常點亮綠燈！
       </div>
 
-      <div style="background: var(--accent-light); color: var(--accent); padding: 14px; border-radius: var(--radius-sm); border: 1.5px solid rgba(37,99,235,0.2); margin-bottom: 20px; text-align: center;">
-        <h4 style="margin: 0 0 6px 0; color: var(--accent);">🚀 解決方案 A：直接在新分頁啟用授權（最推薦）</h4>
-        <p style="font-size: 12.5px; margin-bottom: 12px; color: var(--text2); line-height: 1.4;">點擊下方按鈕，Google 會立刻彈出授權同意畫面。請一路點選「進階」➡️「允許授權」。看到 JSON 格式的文字後關閉該分頁，重新整理此網頁即可連線成功！</p>
-        <a id="modalDirectLink" href="#" target="_blank" class="modal-btn primary" style="padding: 10px 20px; display: inline-flex; gap: 6px; font-weight: bold; width: auto; font-size: 13.5px;">
-          🔓 點我直接在新分頁啟用授權
-        </a>
+      <div style="text-align: center; margin: 16px 0 24px;">
+        <button class="sandbox-btn" onclick="escapeSandbox()" style="margin: 0 auto; padding: 12px 24px; font-size: 14.5px;">
+          🚀 點此在新分頁開啟獨立正式頁面
+        </button>
+      </div>
+
+      <div class="modal-alert-box" style="margin-top: 10px;">
+        <strong>⚡ 檢查點 B：Google 帳戶後端權限</strong><br>
+        如果用獨立分頁打開依然顯示紅燈，請確保在 Apps Script 部署設定中，<strong>「誰有權限存取 (Who has access)」</strong>務必選擇了<strong>「任何人 (Anyone)」</strong>。若選僅限自己或組織，會被 Google 防火牆阻擋。
       </div>
       
-      <h4>🛠️ 解決方案 B：核對後端 Apps Script 部署設定：</h4>
+      <h4>🛠️ 正式部署核對指南：</h4>
       
-      <h4>第一步：確認您 Google 試算表上的工作表名稱</h4>
+      <h4>第一步：確認您 Google 試算表上的工作表分頁</h4>
       <p style="font-size: 13px; margin-bottom: 6px;">請確保您的試算表左下角包含完全一致的兩個分頁：</p>
       <ul style="padding-left: 20px; font-size: 13px; margin-bottom: 12px;">
         <li>📁 <strong>「員工清單」</strong> (A1 儲存格首行為：<code>姓名</code>)</li>
         <li>📁 <strong>「紀錄列表」</strong> (A1 儲存格首行為：<code>日期</code>、<code>填寫人</code>、<code>員工姓名</code>、<code>狀況說明</code>、<code>備註</code>)</li>
       </ul>
 
-      <h4>第二步：使用對齊的正式 Apps Script 程式碼</h4>
-      <p style="font-size: 13px; margin-bottom: 6px;">請完整複製下方代碼，覆蓋貼上您的 Google Apps Script 編輯器，存檔後進行部署：</p>
+      <h4>第二步：使用完全匹配的正式 Apps Script 程式碼</h4>
+      <p style="font-size: 13px; margin-bottom: 6px;">請複製下方與本網頁 100% 匹配的 GAS 程式碼並覆蓋至您的 Apps Script 中：</p>
       
       <!-- 程式碼複製區 -->
       <div class="code-container">
@@ -884,32 +941,24 @@ function doPost(e) {
   }
 }</pre>
       </div>
-      <!-- 隱藏的文字框以實施 iFrame 相容性剪貼簿複製 -->
+      <!-- 隱藏的文字框以實施剪貼簿複製 -->
       <textarea id="gasHiddenTextarea" style="position: absolute; left: -9999px;" readonly></textarea>
 
-      <h4>第三步：正確部署並獲取 /exec 網址</h4>
+      <h4>第三步：如何獲取正確的部署連結</h4>
       <ol style="margin-top: 6px;">
-        <li>在 Apps Script 點擊右上角 <strong>「部署 (Deploy)」➡️「管理部署」➡️「編輯」</strong>（或 <strong>「新建部署」</strong>）。</li>
-        <li>設定正確的權限值（核心關鍵）：
+        <li>在 Google 試算表的 Apps Script 中點擊右上角 <strong>「部署」➡️「管理部署」</strong>。</li>
+        <li>確認設定值是否無誤：
           <ul style="padding-left: 16px; margin-top: 4px;">
-            <li>將應用程式執行為 (Execute as)：選取 <strong>「我 (Me)」</strong></li>
-            <li>誰有權限存取 (Who has access)：務必選取 <strong>「任何人 (Anyone)」</strong></li>
+            <li>將應用程式執行為：選取 <strong>「我 (Me)」</strong></li>
+            <li>誰有權限存取：務必選取 <strong>「任何人 (Anyone)」</strong></li>
           </ul>
         </li>
-        <li>點擊「部署」。初次部署時，請務必點選<strong>「授予存取權」</strong>完成 Google 安全授權核可。</li>
+        <li>點擊儲存，授權 Google 權限，並複製結尾為 <code>/exec</code> 的網址。</li>
       </ol>
-
-      <h4 style="margin-top: 14px;">🔧 在下方即時測試您複製的新網址：</h4>
-      <div style="display: flex; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
-        <input type="text" id="tempGasUrl" placeholder="貼上結尾為 /exec 的新網址..." style="font-size: 13px; padding: 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text);">
-        <button class="nav-btn" onclick="testTempUrl()" style="flex-shrink: 0; background: var(--accent); color: white; border: none; padding: 0 16px; border-radius: var(--radius-sm); font-weight: bold;">測試連線</button>
-      </div>
-
-      <div id="testResult" style="display: none; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; margin-bottom: 12px; line-height: 1.6;"></div>
 
       <div class="modal-btn-group">
         <button class="modal-btn secondary" onclick="closeConnModal()">關閉視窗</button>
-        <button class="modal-btn primary" onclick="location.reload()">重新讀取網頁</button>
+        <button class="modal-btn primary" onclick="location.reload()">重新整理頁面</button>
       </div>
     </div>
   </div>
@@ -919,7 +968,7 @@ function doPost(e) {
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  ⚙️  設定區 — 已寫入您最新部署的 Google Apps Script 網址
+//  ⚙️  設定區 — 已寫入您正式部署的 Google Apps Script 網址
 // ════════════════════════════════════════════════════════════
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx57GFQXUOVuPWBAbIQLiwN0sgNc82Kmdzmz3NV1aHY6Z54XfHJHue_kwPhgtsj97B1PQ/exec";
 // ════════════════════════════════════════════════════════════
@@ -934,7 +983,12 @@ let currentPage = 1;
 
 // ── 初始化 ──
 window.addEventListener("DOMContentLoaded", () => {
-  // 1. 初始化頁面路由與可視範圍
+  // 偵測是否被包在沙盒 Iframe 中，如果是，則在畫面上方顯示脫離沙盒的醒目藍色橫幅
+  if (window.self !== window.top) {
+    document.getElementById("sandboxAlertBanner").style.display = "flex";
+  }
+
+  // 初始化頁面路由
   initRoute();
 
   // 設定預設日期為今天
@@ -955,6 +1009,11 @@ window.addEventListener("DOMContentLoaded", () => {
   // 初始化載入試算表連線
   initConnection();
 });
+
+// ── 脫離沙盒環境：在獨立分頁中打開自己 ──
+function escapeSandbox() {
+  window.open(window.location.href, '_blank');
+}
 
 // ── 判斷目前應該渲染哪一個頁面 ──
 function initRoute() {
@@ -1007,13 +1066,13 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
-// ── 連線初始化偵測與數據載入 (對準正式 GAS `getRecords` 一鍵對齊) ──
+// ── 連線初始化偵測與數據載入 ──
 async function initConnection() {
   updateConnectionUI("pending");
   
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 秒超時，預防 Google 伺服器冷啟動延遲
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 秒超時
 
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
@@ -1028,12 +1087,12 @@ async function initConnection() {
     if (data && data.success) {
       updateConnectionUI("success");
       
-      // 1. 直接同步員工選單
+      // 1. 同步員工選單
       if (data.employees) {
         populateEmployeeSelect(data.employees);
       }
       
-      // 2. 直接載入歷史紀錄資料
+      // 2. 載入歷史紀錄資料
       if (data.records) {
         allRecords = (data.records || []).reverse();
         if (currentView === "records") {
@@ -1054,7 +1113,7 @@ async function initConnection() {
 function handleConnectionError(errMsg) {
   // 更新名單選單顯示連線錯誤
   const sel = document.getElementById("fName");
-  sel.innerHTML = '<option value="">❌ 載入失敗，請點右上角紅燈診斷排查</option>';
+  sel.innerHTML = '<option value="">❌ 載入失敗，請點選上方藍色按鈕在獨立頁面開啟</option>';
 
   // 更新歷史紀錄列表顯示連線錯誤
   const list = document.getElementById("records-list");
@@ -1064,15 +1123,15 @@ function handleConnectionError(errMsg) {
         <div class="state-icon">🔌</div>
         <p style="color: var(--danger); font-size: 16px; font-weight: 800;">無法與 Google 雲端建立安全連線</p>
         <p style="font-size:12.5px; margin-top:8px; font-weight:normal; color: var(--text2); line-height: 1.5;">
-          細節原因：您的 Google 試算表尚未對外開啟存取授權，或目前的連線被安全防火牆阻擋。<br>
-          通常只需手動點擊下方按鈕核准一次授權，即可完美修復！
+          細節原因：瀏覽器在沙盒模式（Iframe Sandbox）中會主動擋下連線請求。<br>
+          您只需要在獨立新分頁中打開此系統，即可直接連接並同步資料！
         </p>
-        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 18px auto 0;">
-          <a href="${GAS_URL}?action=getRecords" target="_blank" class="modal-btn danger-btn" style="text-decoration: none; padding: 10px 18px; font-size: 13px;">
-            🔓 點此在新分頁直接啟用授權
-          </a>
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 18px auto 0;">
+          <button class="sandbox-btn" onclick="escapeSandbox()" style="width: 100%; display: flex; justify-content: center; font-size: 13.5px; padding: 11px 20px;">
+            🚀 點此開啟獨立新分頁（亮起綠燈）
+          </button>
           <button class="nav-btn" onclick="openConnModal()" style="background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); width: 100%; display: flex; justify-content: center; font-size: 13px;">
-            🔍 開啟排查與手動設定指引
+            🔍 查看 Google apps script 部署權限指引
           </button>
         </div>
       </div>
@@ -1104,14 +1163,12 @@ function updateConnectionUI(state) {
 // ── Modal 互動 ──
 function openConnModal() {
   document.getElementById("connModal").classList.add("open");
-  document.getElementById("tempGasUrl").value = GAS_URL;
 }
 function closeConnModal() {
   document.getElementById("connModal").classList.remove("open");
-  document.getElementById("testResult").style.display = "none";
 }
 
-// ── 支援 iframe 相容性的複製代碼函數 ──
+// ── 支援剪貼簿複製代碼 ──
 function copyGasCode() {
   const displayCode = document.getElementById("gasCodeDisplay").textContent;
   const hiddenTextarea = document.getElementById("gasHiddenTextarea");
@@ -1121,70 +1178,9 @@ function copyGasCode() {
   
   try {
     document.execCommand("copy");
-    showToast("後端 GAS 程式碼已複製到剪貼簿！");
+    showToast("正式後端 GAS 程式碼已複製到剪貼簿！");
   } catch (err) {
     showToast("複製失敗，請手動框選複製！", "error");
-  }
-}
-
-// ── 即時測試使用者在視窗中貼入的新 GAS 網址 (與您的 getRecords 匹配) ──
-async function testTempUrl() {
-  const url = document.getElementById("tempGasUrl").value.trim();
-  const resultEl = document.getElementById("testResult");
-  
-  if (!url) {
-    showToast("請輸入欲測試的網址", "error");
-    return;
-  }
-  if (!url.startsWith("https://script.google.com")) {
-    resultEl.style.display = "block";
-    resultEl.style.background = "rgba(239, 68, 68, 0.08)";
-    resultEl.style.color = "var(--danger)";
-    resultEl.textContent = "⚠️ 網址格式不正確！必須是 Google Apps Script 網址（以 https://script.google.com 開頭）。";
-    return;
-  }
-
-  resultEl.style.display = "block";
-  resultEl.style.background = "var(--surface2)";
-  resultEl.style.color = "var(--text2)";
-  resultEl.textContent = "⏳ 正在與該網址建立測試連線，請稍候...";
-
-  try {
-    const res = await fetch(`${url}?action=getRecords`, {
-      method: "GET",
-      mode: "cors",
-      redirect: "follow"
-    });
-    const data = await res.json();
-    
-    if (data && data.success && data.employees) {
-      resultEl.style.background = "var(--success-bg)";
-      resultEl.style.color = "var(--success)";
-      resultEl.innerHTML = `
-        🎉 連線測試成功！<br>
-        您設定的這組新 GAS 權限與代碼完全正確，已能成功抓取試算表中的名單與紀錄！<br>
-        <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 6px; color: var(--text2); line-height: 1.5;">
-          👉 <b>修復步驟：</b><br>
-          請用代碼編輯器開啟您的 <code>index.html</code> 原始碼編輯器，在網頁第 480 行附近找到 <code>const GAS_URL = "...";</code> 並置換為此網址。儲存網頁後重新載入即完成雲端串接！
-        </span>
-      `;
-    } else {
-      throw new Error(data.error || "GAS 回傳了 error 狀態");
-    }
-  } catch (e) {
-    console.error(e);
-    resultEl.style.background = "rgba(239, 68, 68, 0.08)";
-    resultEl.style.color = "var(--danger)";
-    resultEl.innerHTML = `
-      ❌ 連線測試依舊失敗！<br>
-      <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 4px; color: var(--text2); line-height: 1.5;">
-        可能原因排查：<br>
-        1. <b>「誰有權限存取」</b>未選擇為「任何人 (Anyone)」。<br>
-        2. 您可能複製成了「測試部署」網址（其網址結尾為 <code>/dev</code>），請重新部署並複製 <code>/exec</code> 網址。<br>
-        3. 試算表上的分頁標籤名稱不符合，必須有<strong>「員工清單」</strong>與<strong>「紀錄列表」</strong>分頁。<br>
-        4. 專案在部署時未完成帳戶權限允許與授權驗證。
-      </span>
-    `;
   }
 }
 
