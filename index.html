@@ -36,7 +36,6 @@
     --accent-hover: #60A5FA;
     --accent-light: #1E293B;
     --success-bg: #064E3B;
-    --warn-bg: #78350F;
     --shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   }
@@ -141,11 +140,6 @@
     color: var(--success);
     border-color: rgba(16, 185, 129, 0.3);
   }
-  .conn-badge.local-demo {
-    background: var(--warn-bg);
-    color: var(--warn);
-    border-color: rgba(245, 158, 11, 0.3);
-  }
   .conn-dot {
     width: 8px;
     height: 8px;
@@ -179,23 +173,6 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-  }
-
-  /* ── DEMO BANNER ── */
-  .demo-banner {
-    background: var(--warn-bg);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    border-radius: var(--radius-sm);
-    padding: 12px 16px;
-    font-size: 13.5px;
-    color: var(--text2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .demo-banner strong {
-    color: var(--warn);
   }
 
   /* ── CARD ── */
@@ -472,7 +449,7 @@
     white-space: nowrap;
   }
 
-  /* Empty / loading states */
+  /* Empty / error / loading states */
   .state-box {
     text-align: center;
     padding: 40px 20px;
@@ -480,6 +457,11 @@
   }
   .state-box .state-icon { font-size: 48px; margin-bottom: 12px; }
   .state-box p { font-size: 15px; font-weight: 600; }
+  .state-box.error-state {
+    background: rgba(239, 68, 68, 0.04);
+    border: 1.5px dashed rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius);
+  }
 
   /* ── PAGINATION ── */
   .pagination {
@@ -564,12 +546,12 @@
   .modal-body ol li { margin-bottom: 8px; }
   
   .modal-alert-box {
-    background: var(--warn-bg);
-    color: var(--warn);
+    background: rgba(239, 68, 68, 0.05);
+    color: var(--danger);
     padding: 12px 16px;
     border-radius: var(--radius-sm);
     margin: 12px 0;
-    border-left: 4px solid var(--warn);
+    border-left: 4px solid var(--danger);
   }
   
   /* 📊 GAS CODE CONTAINER ── */
@@ -671,15 +653,6 @@
 
 <main>
 
-  <!-- Demo Fallback Mode Banner -->
-  <div id="demoBanner" class="demo-banner" style="display: none;">
-    <div>
-      <strong>⚠️ 目前正處於「離線模擬展示模式」</strong>
-      <span>（雲端 GAS 連線未通，系統已為您載入 LocalStorage 模擬名單以供操作）</span>
-    </div>
-    <button class="nav-btn" onclick="openConnModal()" style="padding: 6px 12px; font-size: 11.5px; background: var(--warn); color: white; border: none;">如何連接到雲端？</button>
-  </div>
-
   <!-- Form Card (新增紀錄頁面) -->
   <div class="card" id="formCard">
     <div class="card-header">
@@ -762,15 +735,21 @@
     </div>
     <div class="modal-body">
       <div class="modal-alert-box">
-        <strong>💡 為什麼會連線失敗？</strong><br>
-        1. 您的 Google 試算表後端 Apps Script 尚未貼上與此網頁匹配的程式碼。<br>
-        2. 部署時「誰有權限存取」未設定為「任何人」，被 Google 的防火牆阻擋 (CORS)。
+        <strong>❌ 連線異常提示：網頁目前無法讀取後端資料</strong><br>
+        通常是由於 GAS 網頁應用程式部署設定中，<strong>「誰有權限存取」</strong>未選擇為<strong>「任何人」</strong>，或是試算表 ID 設定錯誤。
       </div>
       
-      <h4>🛠️ 終極解決方案（只需兩步）：</h4>
+      <h4>🛠️ 終極排查與設定指引：</h4>
       
-      <h4>第一步：複製並更新您的 Apps Script 程式碼</h4>
-      <p style="font-size: 13px; margin-bottom: 6px;">請複製下方為您客製的後端代碼，覆蓋貼上您的 Google Apps Script 編輯器，存檔後「重新部署」：</p>
+      <h4>第一步：確認您 Google 試算表上的工作表名稱</h4>
+      <p style="font-size: 13px; margin-bottom: 6px;">請確保您的試算表左下角包含完全一致的兩個分頁：</p>
+      <ul style="padding-left: 20px; font-size: 13px; margin-bottom: 12px;">
+        <li>📁 <strong>「員工清單」</strong> (A1 儲存格首行為：<code>姓名</code>)</li>
+        <li>📁 <strong>「紀錄列表」</strong> (A1 儲存格首行為：<code>日期</code>、<code>填寫人</code>、<code>員工姓名</code>、<code>狀況說明</code>、<code>備註</code>)</li>
+      </ul>
+
+      <h4>第二步：使用對齊的正式 Apps Script 程式碼</h4>
+      <p style="font-size: 13px; margin-bottom: 6px;">請完整複製下方代碼，覆蓋覆蓋貼上您的 Google Apps Script 編輯器，存檔後進行部署：</p>
       
       <!-- 程式碼複製區 -->
       <div class="code-container">
@@ -888,16 +867,16 @@ function doPost(e) {
       <!-- 隱藏的文字框以實施 iFrame 相容性剪貼簿複製 -->
       <textarea id="gasHiddenTextarea" style="position: absolute; left: -9999px;" readonly></textarea>
 
-      <h4>第二步：正確完成「部署設定」並獲取網址</h4>
+      <h4>第三步：正確部署並獲取 /exec 網址</h4>
       <ol style="margin-top: 6px;">
-        <li>在 Apps Script 點擊 <strong>「部署」➡️「管理部署」➡️「編輯」</strong>（或 <strong>「新建部署」</strong>）。</li>
-        <li>設定設定值：
+        <li>在 Apps Script 點擊右上角 <strong>「部署 (Deploy)」➡️「管理部署」➡️「編輯」</strong>（或 <strong>「新建部署」</strong>）。</li>
+        <li>設定正確的權限值（核心關鍵）：
           <ul style="padding-left: 16px; margin-top: 4px;">
             <li>將應用程式執行為 (Execute as)：選取 <strong>「我 (Me)」</strong></li>
-            <li>誰有權限存取 (Who has access)：務必選取 <strong>「任何人 (Anyone)」</strong> <br><i>(※ 關鍵：若選僅限自己或組織，會導致連線失敗)</i></li>
+            <li>誰有權限存取 (Who has access)：務必選取 <strong>「任何人 (Anyone)」</strong></li>
           </ul>
         </li>
-        <li>點擊「部署」。第一次部署時，請務必點選<strong>「授予存取權」</strong>，完成 Google 安全驗證授權。</li>
+        <li>點擊「部署」。初次部署時，請務必點選<strong>「授予存取權」</strong>完成 Google 安全授權核可。</li>
       </ol>
 
       <h4 style="margin-top: 14px;">🔧 在下方即時測試您複製的新網址：</h4>
@@ -925,37 +904,10 @@ function doPost(e) {
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx57GFQXUOVuPWBAbIQLiwN0sgNc82Kmdzmz3NV1aHY6Z54XfHJHue_kwPhgtsj97B1PQ/exec";
 // ════════════════════════════════════════════════════════════
 
-// 模擬資料初始化（完全對照您第一張圖片上的真實員工名單，防備用）
-const MOCK_EMPLOYEES = [
-  "E90147 倪拉米",
-  "E90186 吉拉潘",
-  "E90189 素帕猜",
-  "E90190 蘇勉",
-  "E90194 班羅",
-  "E90195 維拉帕",
-  "E90199 吳泰",
-  "E90206 宋彭",
-  "E90210 沙洋",
-  "E90213 威拉佑",
-  "E90214 查沐",
-  "E90220 拉那猜",
-  "E90224 尼浪",
-  "E90226 吉地沙",
-  "E90231 阿銘",
-  "E90232 頌猜"
-];
-
-const MOCK_RECORDS = [
-  { date: "2026-06-11", name: "E90147 倪拉米", recorder: "系統管理員", desc: "測試離線展示：工作表現主動且優良，協助新進人員適應環境。", note: "此為離線模擬資料" },
-  { date: "2026-06-10", name: "E90186 吉拉潘", recorder: "張廠長", desc: "下午準時配合臨時產線調整任務，態度積極負責。", note: "表現優良" },
-  { date: "2026-06-09", name: "E90189 素帕猜", recorder: "李組長", desc: "早上因身體不適前往就醫請假，下午已正常返回崗位。", note: "已繳交看診證明" }
-];
-
 // 頁面狀態
 let currentView = "form"; // "form" 或 "records"
-let isOfflineMode = false;
 
-const RECORDS_PER_PAGE = 5;
+const RECORDS_PER_PAGE = 10;
 let allRecords = [];
 let filteredRecords = [];
 let currentPage = 1;
@@ -1015,6 +967,9 @@ function toggleViewMode(view) {
     
     document.title = "移工工作狀況紀錄系統";
     pageTitle.textContent = "移工工作狀況紀錄";
+    
+    // 如果回到表單頁面，更新名單
+    initConnection();
   }
 }
 
@@ -1029,15 +984,14 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
-// ── 連線初始化偵測與數據載入 (與您的 GAS `getRecords` 一鍵對齊) ──
+// ── 連線初始化偵測與數據載入 (對準正式 GAS `getRecords` 一鍵對齊) ──
 async function initConnection() {
   updateConnectionUI("pending");
   
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 秒超時
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 秒超時，預防 Google 伺服器冷啟動延遲
 
-    // 💡 關鍵修復：這裡直接向您唯一的 getRecords API 請求，取得 employees 與 records 資料
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
       mode: "cors",
@@ -1050,8 +1004,6 @@ async function initConnection() {
     
     if (data && data.success) {
       updateConnectionUI("success");
-      isOfflineMode = false;
-      document.getElementById("demoBanner").style.display = "none";
       
       // 1. 直接同步員工選單
       if (data.employees) {
@@ -1066,28 +1018,36 @@ async function initConnection() {
         }
       }
     } else {
-      throw new Error(data.error || "GAS 回傳異常");
+      throw new Error(data.error || "GAS 回傳了 error 狀態");
     }
   } catch (e) {
-    console.warn("自動啟用模擬離線展示模式:", e.message);
-    enableDemoMode();
+    console.error("雲端連線失敗:", e.message);
+    updateConnectionUI("error");
+    handleConnectionError(e.message);
   }
 }
 
-// ── 啟用模擬展示模式 (當 GAS 無法連線時的保底機制) ──
-function enableDemoMode() {
-  isOfflineMode = true;
-  updateConnectionUI("local-demo");
-  document.getElementById("demoBanner").style.display = "flex";
-  
-  populateEmployeeSelect(MOCK_EMPLOYEES);
-  
-  if (!localStorage.getItem("mock_records_db")) {
-    localStorage.setItem("mock_records_db", JSON.stringify(MOCK_RECORDS));
-  }
-  
-  if (currentView === "records") {
-    loadRecords();
+// ── 處理連線異常 ──
+function handleConnectionError(errMsg) {
+  // 更新名單選單顯示連線錯誤
+  const sel = document.getElementById("fName");
+  sel.innerHTML = '<option value="">❌ 載入失敗，請點右上角紅燈診斷排查</option>';
+
+  // 更新歷史紀錄列表顯示連線錯誤
+  const list = document.getElementById("records-list");
+  if (list) {
+    list.innerHTML = `
+      <div class="state-box error-state">
+        <div class="state-icon">🔌</div>
+        <p style="color: var(--danger);">無法與 Google Apps Script 建立連線</p>
+        <p style="font-size:12.5px; margin-top:8px; font-weight:normal; color: var(--text2);">
+          細節：${errMsg || "網路連線異常或跨網域 (CORS) 權限阻擋"}。請點選右上角紅燈排查，或是確認您的 Google Apps Script 已將存取權限設為「任何人 (Anyone)」。
+        </p>
+        <button class="nav-btn" onclick="openConnModal()" style="margin: 16px auto 0; background: var(--accent); color: white; border: none; display: flex;">診斷與排查助手</button>
+      </div>
+    `;
+    const pag = document.getElementById("pagination");
+    if (pag) pag.innerHTML = "";
   }
 }
 
@@ -1103,10 +1063,6 @@ function updateConnectionUI(state) {
   else if (state === "success") {
     badge.className = "conn-badge cloud";
     text.textContent = "🟢 雲端已連線";
-  }
-  else if (state === "local-demo") {
-    badge.className = "conn-badge local-demo";
-    text.textContent = "🟠 模擬模式（點選排查）";
   }
   else if (state === "error") {
     badge.className = "conn-badge error";
@@ -1175,10 +1131,10 @@ async function testTempUrl() {
       resultEl.style.color = "var(--success)";
       resultEl.innerHTML = `
         🎉 連線測試成功！<br>
-        您設定的這組新 GAS 權限與代碼完全正確，且能成功抓取 ${data.employees.length} 位員工姓名。<br>
+        您設定的這組新 GAS 權限與代碼完全正確，已能成功抓取試算表中的名單與紀錄！<br>
         <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 6px; color: var(--text2); line-height: 1.5;">
           👉 <b>修復步驟：</b><br>
-          請打開您的 <code>index.html</code> 原始碼編輯器，在網頁第 480 行附近找到 <code>const GAS_URL = "...";</code> 並置換為此網址。儲存網頁後重新載入即完成雲端串接！
+          請用代碼編輯器開啟您的 <code>index.html</code> 原始碼編輯器，在網頁第 480 行附近找到 <code>const GAS_URL = "...";</code> 並置換為此網址。儲存網頁後重新載入即完成雲端串接！
         </span>
       `;
     } else {
@@ -1195,7 +1151,7 @@ async function testTempUrl() {
         1. <b>「誰有權限存取」</b>未選擇為「任何人 (Anyone)」。<br>
         2. 您可能複製成了「測試部署」網址（其網址結尾為 <code>/dev</code>），請重新部署並複製 <code>/exec</code> 網址。<br>
         3. 試算表上的分頁標籤名稱不符合，必須有<strong>「員工清單」</strong>與<strong>「紀錄列表」</strong>分頁。<br>
-        4. 專案在部署時未完成帳戶權限允許與授權。
+        4. 專案在部署時未完成帳戶權限允許與授權驗證。
       </span>
     `;
   }
@@ -1259,28 +1215,6 @@ async function submitRecord() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> 正在送出紀錄…';
 
-  if (isOfflineMode) {
-    setTimeout(() => {
-      try {
-        const localDbStr = localStorage.getItem("mock_records_db") || JSON.stringify(MOCK_RECORDS);
-        const localDb = JSON.parse(localDbStr);
-        
-        const newRecord = { date, recorder, name, desc, note };
-        localDb.unshift(newRecord); 
-        
-        localStorage.setItem("mock_records_db", JSON.stringify(localDb));
-        showToast("【展示模式】紀錄已成功保存在瀏覽器 LocalStorage！");
-        resetForm();
-      } catch (err) {
-        showToast("本地保存失敗", "error");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>📤</span> 送出紀錄';
-      }
-    }, 600);
-    return;
-  }
-
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
@@ -1297,7 +1231,7 @@ async function submitRecord() {
       showToast(data.message || "送出失敗，請重試", "error");
     }
   } catch (e) {
-    showToast("同步失敗，請確認您的網路連線或稍後再試", "error");
+    showToast("雲端同步失敗，請確認您的網路連線或稍後再試", "error");
     console.error(e);
   } finally {
     btn.disabled = false;
@@ -1305,6 +1239,7 @@ async function submitRecord() {
   }
 }
 
+// ── 重設表單 ──
 function resetForm() {
   document.getElementById("fRecorder").value = "";
   document.getElementById("fDesc").value = "";
@@ -1320,21 +1255,6 @@ async function loadRecords() {
   const list = document.getElementById("records-list");
   list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>紀錄讀取中…</p></div>`;
 
-  if (isOfflineMode) {
-    setTimeout(() => {
-      try {
-        const localDbStr = localStorage.getItem("mock_records_db") || JSON.stringify(MOCK_RECORDS);
-        allRecords = JSON.parse(localDbStr);
-        filterRecords();
-      } catch (err) {
-        list.innerHTML = `<div class="state-box"><div class="state-icon">❌</div><p>讀取模擬歷史失敗</p></div>`;
-      } finally {
-        btn.classList.remove("spinning");
-      }
-    }, 400);
-    return;
-  }
-
   try {
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
@@ -1344,10 +1264,13 @@ async function loadRecords() {
     const data = await res.json();
     
     if (data && data.success) {
-      // 順便同步員工名冊
+      updateConnectionUI("success");
+      
+      // 順便同步員工名冊選單
       if (data.employees) {
         populateEmployeeSelect(data.employees);
       }
+      
       allRecords = (data.records || []).reverse();
       filterRecords();
     } else {
@@ -1355,13 +1278,8 @@ async function loadRecords() {
     }
   } catch (e) {
     console.error("雲端讀取歷史紀錄失敗", e);
-    list.innerHTML = `
-      <div class="state-box">
-        <div class="state-icon">❌</div>
-        <p>讀取失敗，請確認網路連線與 Google Apps Script 部署設定是否無誤。</p>
-      </div>
-    `;
-    showToast("無法載入雲端數據", "error");
+    updateConnectionUI("error");
+    handleConnectionError(e.message);
   } finally {
     btn.classList.remove("spinning");
   }
