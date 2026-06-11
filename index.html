@@ -126,6 +126,7 @@
     border: 1px solid var(--border);
     user-select: none;
     cursor: pointer;
+    transition: all 0.2s ease;
   }
   .conn-badge.pending {
     background: var(--surface2);
@@ -141,12 +142,24 @@
     color: var(--success);
     border-color: rgba(16, 185, 129, 0.3);
   }
+  .conn-badge.local {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border-color: rgba(245, 158, 11, 0.3);
+  }
   .conn-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: currentColor;
     display: inline-block;
+  }
+  .conn-badge.cloud .conn-dot {
+    animation: pulse 2s infinite ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
   }
 
   .theme-btn {
@@ -175,6 +188,33 @@
     flex-direction: column;
     gap: 24px;
   }
+
+  /* ── DEMO BANNER ── */
+  .demo-banner {
+    display: none;
+    background: var(--warn-bg);
+    border: 1px dashed var(--warn);
+    color: var(--warn);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .demo-banner button {
+    background: var(--warn);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+    transition: opacity 0.2s;
+  }
+  .demo-banner button:hover { opacity: 0.9; }
 
   /* ── CARD ── */
   .card {
@@ -303,7 +343,7 @@
     border-radius: 50px;
     font-size: 14px;
     font-weight: 700;
-    z-index: 1001;
+    z-index: 1015;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -315,6 +355,7 @@
   #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   #toast.success { background: var(--success); }
   #toast.error { background: var(--danger); }
+  #toast.warn { background: var(--warn); }
 
   /* ── RECORDS ── */
   .records-toolbar {
@@ -477,7 +518,7 @@
     font-size: 13px;
     font-weight: 700;
     display: flex;
-    align-items: center; justify-content: center;
+    align-items: center justify-content: center;
     padding: 0 12px;
     transition: all 0.2s ease;
   }
@@ -506,6 +547,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
+    overflow-y: auto;
   }
   .modal-overlay.open {
     opacity: 1;
@@ -514,13 +556,16 @@
   .modal-content {
     background: var(--surface);
     border-radius: var(--radius);
-    max-width: 520px;
+    max-width: 580px;
     width: 100%;
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
     overflow: hidden;
     transform: translateY(20px);
     transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
   }
   .modal-overlay.open .modal-content {
     transform: translateY(0);
@@ -529,12 +574,19 @@
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
   }
   .modal-header h3 { font-size: 16px; font-weight: 800; }
   .modal-close {
     background: none; border: none; font-size: 24px; color: var(--text2); cursor: pointer;
   }
-  .modal-body { padding: 20px; font-size: 14px; line-height: 1.6; color: var(--text2); }
+  .modal-body { 
+    padding: 20px; 
+    font-size: 14px; 
+    line-height: 1.6; 
+    color: var(--text2);
+    overflow-y: auto;
+  }
   .modal-body h4 { color: var(--text); font-weight: 800; margin-top: 16px; margin-bottom: 8px; }
   .modal-body ol { padding-left: 20px; margin-bottom: 16px; }
   .modal-body ol li { margin-bottom: 8px; }
@@ -548,14 +600,50 @@
   }
   .modal-btn-group {
     display: flex; gap: 10px; margin-top: 20px;
+    flex-shrink: 0;
   }
   .modal-btn {
     flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    text-align: center;
   }
   .modal-btn.primary { background: var(--accent); color: #fff; }
   .modal-btn.primary:hover { background: var(--accent-hover); }
   .modal-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .modal-btn.secondary:hover { background: var(--border); }
+
+  /* ── CODE BLOCK STYLING ── */
+  .code-container {
+    position: relative;
+    margin: 12px 0;
+  }
+  .code-textarea {
+    width: 100%;
+    height: 180px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    resize: none;
+    outline: none;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 5;
+  }
+  .copy-btn:hover { background: var(--accent-hover); }
 
   /* ── MOBILE ── */
   @media (max-width: 480px) {
@@ -613,6 +701,12 @@
 
 <main>
 
+  <!-- Demo Mode Banner -->
+  <div id="demoBanner" class="demo-banner">
+    <span>⚠️ 目前正處於「離線模擬展示模式」，資料將暫存於本機。</span>
+    <button onclick="openConnModal()">如何連接到雲端？</button>
+  </div>
+
   <!-- Form Card (新增紀錄頁面) -->
   <div class="card" id="formCard">
     <div class="card-header">
@@ -634,7 +728,6 @@
         </div>
         <div class="form-group">
           <label>員工姓名 <span class="required">*</span></label>
-          <!-- 員工選單：完全由 Google 試算表後端同步，移除管理按鈕 -->
           <select id="fName" required>
             <option value="">— 請選擇員工 —</option>
           </select>
@@ -697,24 +790,104 @@
     <div class="modal-body">
       <div class="modal-alert-box" style="background: rgba(239, 68, 68, 0.08); color: var(--danger); border-left: 4px solid var(--danger);">
         <strong>❌ 網頁目前無法與 Google Apps Script (GAS) 建立連線</strong><br>
-        通常是由於 GAS 後端的「部署設定」未完全對外公開（被 Google 權限阻擋）。
+        1. 可能未貼上正確的執行網址；2. GAS 的部署權限設定錯誤；3. 您還沒在 GAS 中加入後端程式碼。
+      </div>
+
+      <h4>⚙️ 第一步：在試算表中貼上並儲存後端程式碼：</h4>
+      <p style="margin-bottom: 8px;">請複製下方完整的 Apps Script 程式碼，貼到您的 Google Apps Script 編輯器中，並存檔：</p>
+      
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyGasCode()">複製程式碼</button>
+        <textarea class="code-textarea" id="gasCodeTextarea" readonly>/* 將此程式碼整段貼入 Google Apps Script (GAS) 編輯器中
+  確保它取代所有原有內容後，儲存並「部署」
+*/
+
+function doGet(e) {
+  var action = e.parameter.action;
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // 若工作表空白，則自動建立首行標題欄位
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["日期", "填寫人", "員工姓名", "狀況說明", "備註"]);
+  }
+  
+  if (action === "getRecords") {
+    var rows = sheet.getDataRange().getValues();
+    var records = [];
+    
+    // 從第2行開始讀取（排除首行標題）
+    for (var i = 1; i < rows.length; i++) {
+      records.push({
+        date: rows[i][0] ? String(rows[i][0]) : "",
+        recorder: rows[i][1] ? String(rows[i][1]) : "",
+        name: rows[i][2] ? String(rows[i][2]) : "",
+        desc: rows[i][3] ? String(rows[i][3]) : "",
+        note: rows[i][4] ? String(rows[i][4]) : ""
+      });
+    }
+    
+    // 預設同步更新的員工選單
+    var employees = [
+      "阿米爾 (Amir)", 
+      "阮氏香 (Nguyen)", 
+      "索帝雅诺 (Sotiano)", 
+      "陳莉娜 (Lina)",
+      "雅各 (Jacob)",
+      "莎莉 (Sari)"
+    ];
+    
+    var output = {
+      records: records,
+      employees: employees
+    };
+    
+    return ContentService.createTextOutput(JSON.stringify(output))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
+}
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["日期", "填寫人", "員工姓名", "狀況說明", "備註"]);
+    }
+    
+    if (data.action === "addRecord") {
+      sheet.appendRow([
+        data.date,
+        data.recorder,
+        data.name,
+        data.desc,
+        data.note
+      ]);
+      
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeader('Access-Control-Allow-Origin', '*');
+    }
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
+}</textarea>
       </div>
       
-      <h4>💡 請依照以下 3 個步驟重新設定與排查您的 Apps Script：</h4>
+      <h4>💡 第二步：正確「部署網頁應用程式」：</h4>
       <ol>
-        <li>打開您的 Google 雲端硬碟，進入該專案的 Apps Script 編輯器。</li>
-        <li>點擊右上角綠色按鈕 <strong>「部署 (Deploy)」</strong> ➡️ 選擇 <strong>「管理部署 (Manage deployments)」</strong> 或 <strong>「新建部署 (New deployment)」</strong>：
-          <ul style="padding-left: 20px; margin-top: 4px;">
-            <li>部署類型務必選：<strong>「網頁應用程式 (Web app)」</strong></li>
-            <li>將應用程式執行為 (Execute as)：選取 <strong>「我 (Me - 您的 Google 帳號)」</strong></li>
-            <li>誰有權限存取 (Who has access)：務必選取 <strong>「任何人 (Anyone)」</strong> <br><i>(※ 注意：千萬不能選僅限自己或僅限 Google 帳戶，否則瀏覽器會回傳 CORS 失敗)</i></li>
-          </ul>
-        </li>
-        <li>點擊 <strong>「部署」</strong>。若 Google 彈出授權視窗，請務必點選「查看權限」➡️「進階」➡️「轉往未命名專案」➡️ 按下「允許」完成授權。</li>
-        <li>複製產生的<strong>網頁應用程式網址 (結尾為 /exec)</strong>。</li>
+        <li>在編輯器右上角點擊 <strong>「部署 (Deploy)」</strong> ➡️ 選擇 <strong>「新部署 (New deployment)」</strong>。</li>
+        <li>將左側齒輪選單中選為 <strong>「網頁應用程式 (Web app)」</strong>。</li>
+        <li>將應用程式執行為 (Execute as) 設為：<strong>「我 (您的 Google 帳號)」</strong>。</li>
+        <li>誰有權限存取 (Who has access) 設為：<strong>「任何人 (Anyone)」</strong>。<i>(千萬不能選僅限自己或僅限 Google 帳戶，否則會發生 CORS 阻擋錯誤)</i></li>
+        <li>點擊 <strong>「部署」</strong> 並完成 Google 安全性「進階」允許授權。</li>
+        <li>複製最後產生的 <strong>網頁應用程式網址 (結尾必須為 /exec)</strong>。</li>
       </ol>
 
-      <h4>🔧 即時測試您複製的新網址：</h4>
+      <h4>🔧 第三步：即時測試新部署網址：</h4>
       <div style="display: flex; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
         <input type="text" id="tempGasUrl" placeholder="在此貼上結尾為 /exec 的新網址..." style="font-size: 13px; padding: 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text);">
         <button class="nav-btn" onclick="testTempUrl()" style="flex-shrink: 0; background: var(--accent); color: white; border: none; padding: 0 16px; border-radius: var(--radius-sm); font-weight: bold;">測試連線</button>
@@ -723,7 +896,7 @@
       <div id="testResult" style="display: none; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; margin-bottom: 12px; line-height: 1.6;"></div>
 
       <div class="modal-btn-group">
-        <button class="modal-btn secondary" onclick="closeConnModal()">關閉視窗</button>
+        <button class="modal-btn secondary" onclick="enableDemoMode()">直接啟用「模擬體驗模式」</button>
         <button class="modal-btn primary" onclick="location.reload()">重新整理網頁</button>
       </div>
     </div>
@@ -734,22 +907,23 @@
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  ⚙️  設定區 — 已寫入您正式部署的 Google Apps Script 網址
+//  ⚙️  設定區 — 貼入您部署完成的 Google Apps Script 網址
 // ════════════════════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwsxM5LGfuCibfUZq6eQkkSN3355zZ0sPI0HK2DRoq85keCZf3eFmk1hp6G72QRAOOJbQ/exec";
+let GAS_URL = "https://script.google.com/macros/s/AKfycbx57GFQXUOVuPWBAbIQLiwN0sgNc82Kmdzmz3NV1aHY6Z54XfHJHue_kwPhgtsj97B1PQ/exec";
 // ════════════════════════════════════════════════════════════
 
 // 當前頁面模式，預設 "form" (填寫模式)，另有 "records" (歷史紀錄模式)
 let currentView = "form";
+let isDemoMode = false; // 是否進入離線體驗模式
 
 const RECORDS_PER_PAGE = 10;
 let allRecords = [];
 let filteredRecords = [];
 let currentPage = 1;
 
-// ── 本地緩存名單 ──
+// ── 本地緩存名單與預設範例 ──
 let employeeList = [];
-const DEFAULT_EMPLOYEES = ["阿米爾 (Amir)", "阮氏香 (Nguyen)", "索帝雅诺 (Sotiano)", "陳莉娜 (Lina)"];
+const DEFAULT_EMPLOYEES = ["阿米爾 (Amir)", "阮氏香 (Nguyen)", "索帝雅诺 (Sotiano)", "陳莉娜 (Lina)", "雅各 (Jacob)", "莎莉 (Sari)"];
 
 // ── 初始化 ──
 window.addEventListener("DOMContentLoaded", () => {
@@ -766,6 +940,12 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setTheme(prefersDark ? "dark" : "light");
+  }
+
+  // 檢查是否手動開過離線模式
+  if (localStorage.getItem("offline_demo_mode") === "true") {
+    isDemoMode = true;
+    document.getElementById("demoBanner").style.display = "flex";
   }
 
   // 初始化載入試算表連線
@@ -829,15 +1009,59 @@ function todayStr(offsetDays = 0) {
   return `${year}-${month}-${day}`;
 }
 
+// ── 啟用本機離線體驗模式 ──
+function enableDemoMode() {
+  isDemoMode = true;
+  localStorage.setItem("offline_demo_mode", "true");
+  document.getElementById("demoBanner").style.display = "flex";
+  closeConnModal();
+  updateConnectionUI("local");
+  showToast("已成功啟用本機模擬體驗模式！", "warn");
+  
+  // 載入本地範例與現有本地紀錄
+  loadEmployees();
+  loadLocalRecords();
+}
+
+// ── 載入本機端暫存紀錄 ──
+function loadLocalRecords() {
+  const localRecs = localStorage.getItem("local_records_data");
+  if (localRecs) {
+    allRecords = JSON.parse(localRecs);
+  } else {
+    // 預設一筆測試，讓畫面不空白
+    allRecords = [
+      {
+        date: todayStr(-1),
+        recorder: "系統管理員",
+        name: "阿米爾 (Amir)",
+        desc: "測試離線展示：工作表現主動且優良，協助新進人員適應環境。",
+        note: "此為離線模擬資料"
+      }
+    ];
+    localStorage.setItem("local_records_data", JSON.stringify(allRecords));
+  }
+  
+  if (currentView === "records") {
+    filterRecords();
+  }
+}
+
 // ── 本地名單載入與雲端連線偵測 ──
 async function initConnection() {
-  // 1. 立即從本機緩存加載員工名冊，極速響應！不需等待 Google 試算表。
+  // 1. 立即從本機緩存或範例名單加載員工，極速響應！
   loadEmployees();
   
+  if (isDemoMode) {
+    updateConnectionUI("local");
+    loadLocalRecords();
+    return;
+  }
+
   updateConnectionUI("pending");
   
   try {
-    // 2. 僅作背景連線健康度探測，抓取唯讀歷史紀錄確認 CORS 的健康狀態
+    // 2. 進行連線探測
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
       mode: "cors",
@@ -848,16 +1072,12 @@ async function initConnection() {
       const data = await res.json();
       updateConnectionUI("success");
 
-      // 3. 背景自動更新員工緩存並重繪選單（如果試算表回傳了最新名單）
+      // 3. 背景自動更新員工緩存並重繪選單
       if (data.employees && Array.isArray(data.employees)) {
-        // 先保留使用者當前選取的項目，防止更新時被重設
         const currentSelected = document.getElementById("fName").value;
-        
         employeeList = data.employees;
         localStorage.setItem("employee_list", JSON.stringify(employeeList));
         populateEmployeeSelect(employeeList);
-        
-        // 還原剛才選取的項目
         if (currentSelected && employeeList.includes(currentSelected)) {
           document.getElementById("fName").value = currentSelected;
         }
@@ -866,7 +1086,6 @@ async function initConnection() {
       // 4. 解析歷史紀錄
       allRecords = (data.records || []).reverse();
 
-      // 如果本頁面是歷史紀錄頁面，立刻為其渲染清單
       if (currentView === "records") {
         filterRecords();
       }
@@ -875,27 +1094,22 @@ async function initConnection() {
     }
   } catch (e) {
     console.error("雲端連線測試失敗", e);
-    updateConnectionUI("error");
     
-    if (currentView === "records") {
-      const list = document.getElementById("records-list");
-      list.innerHTML = `
-        <div class="state-box">
-          <div class="state-icon">❌</div>
-          <p>無法取得歷史紀錄，請點選右上角紅燈按鈕進行設定診斷排查。</p>
-        </div>
-      `;
-    }
+    // 連線失敗，自動無縫切換到本機模擬模式！
+    isDemoMode = true;
+    localStorage.setItem("offline_demo_mode", "true");
+    document.getElementById("demoBanner").style.display = "flex";
+    updateConnectionUI("local");
+    loadLocalRecords();
   }
 }
 
-// ── 員工名單本機緩存讀取與選單繪製 ──
+// ── 員工名單本機緩存讀取 ──
 function loadEmployees() {
   const localData = localStorage.getItem("employee_list");
   if (localData) {
     employeeList = JSON.parse(localData);
   } else {
-    // 若本機尚未有任何名單（首次打開），預載範例名單，等待背景同步更新
     employeeList = [...DEFAULT_EMPLOYEES];
   }
   populateEmployeeSelect(employeeList);
@@ -903,6 +1117,7 @@ function loadEmployees() {
 
 function populateEmployeeSelect(list) {
   const sel = document.getElementById("fName");
+  if (!sel) return;
   sel.innerHTML = '<option value="">— 請選擇員工 —</option>';
   
   list.forEach(name => {
@@ -917,7 +1132,8 @@ function populateEmployeeSelect(list) {
 function updateConnectionUI(state) {
   const badge = document.getElementById("connBadge");
   const text = document.getElementById("connBadgeText");
-  
+  if (!badge || !text) return;
+
   if (state === "pending") {
     badge.className = "conn-badge pending";
     text.textContent = "🟡 雲端連線中...";
@@ -930,6 +1146,10 @@ function updateConnectionUI(state) {
     badge.className = "conn-badge error";
     text.textContent = "🔴 連線失敗（點選排查）";
   }
+  else if (state === "local") {
+    badge.className = "conn-badge local";
+    text.textContent = "🟠 離線模擬中（點選排查）";
+  }
 }
 
 // ── Modal 互動 ──
@@ -940,6 +1160,19 @@ function openConnModal() {
 function closeConnModal() {
   document.getElementById("connModal").classList.remove("open");
   document.getElementById("testResult").style.display = "none";
+}
+
+// ── 一鍵複製功能 ──
+function copyGasCode() {
+  const textarea = document.getElementById("gasCodeTextarea");
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); /* 對行動裝置友好 */
+  try {
+    document.execCommand('copy');
+    showToast("GAS 程式碼已成功複製！");
+  } catch (err) {
+    showToast("複製失敗，請手動長按進行選取複製", "error");
+  }
 }
 
 // ── 即時測試使用者在視窗中貼入的新 GAS 網址 ──
@@ -977,15 +1210,16 @@ async function testTempUrl() {
       resultEl.style.color = "var(--success)";
       resultEl.innerHTML = `
         🎉 連線測試成功！<br>
-        幕後這組新 GAS 權限完全正確，且能成功串接試算表。<br>
+        這個新 GAS 權限完全正確，且能成功串接試算表。<br>
         <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 6px; color: var(--text2); line-height: 1.5;">
-          👉 <b>修復步驟：</b><br>
-          1. 複製此網址，用編輯器打開您的 <code>index.html</code>。<br>
-          2. 找到程式碼中的 <code>const GAS_URL = "...";</code> 並置換為此網址。<br>
-          3. 重新 Commit & Push 上傳至您的 GitHub 儲存庫。<br>
-          4. 等待 1 分鐘後重新整理本網頁，即可完美正常運作！
+          👉 <b>如何更換：</b><br>
+          請用編輯器打開您的 <code>index.html</code>，找到 <code>let GAS_URL = "...";</code> 並置換為這個網址。
         </span>
       `;
+      // 同步本地快取，以便體驗
+      localStorage.removeItem("offline_demo_mode");
+      isDemoMode = false;
+      document.getElementById("demoBanner").style.display = "none";
     } else {
       throw new Error("Invalid format");
     }
@@ -994,12 +1228,12 @@ async function testTempUrl() {
     resultEl.style.background = "rgba(239, 68, 68, 0.08)";
     resultEl.style.color = "var(--danger)";
     resultEl.innerHTML = `
-      ❌ 連線測試依舊失敗！<br>
+      ❌ 連線測試依然失敗！<br>
       <span style="font-weight: normal; font-size: 12.5px; display: block; margin-top: 4px; color: var(--text2); line-height: 1.5;">
         可能原因排查：<br>
-        1. <b>「誰有權限存取 (Who has access)」</b>未選擇為「任何人 (Anyone)」。<br>
-        2. 您複製成了<b>「測試部署」</b>網址（其網址結尾為 <code>/dev</code>），請重新「新建部署」並複製結尾為 <code>/exec</code> 的網址。<br>
-        3. 專案在部署時未點擊「允許授權」按鈕。
+        1. 您的程式碼未成功儲存，或尚未點擊「部署 ➡️ 網頁應用程式」。<br>
+        2. <b>「誰有權限存取 (Who has access)」</b>未選擇為「任何人 (Anyone)」。<br>
+        3. 您複製成了<b>「測試部署」</b>網址（其網址結尾為 <code>/dev</code>），請重新「新部署」並複製結尾為 <code>/exec</code> 的網址。
       </span>
     `;
   }
@@ -1019,7 +1253,7 @@ function setTheme(t) {
 // ── 提示訊息 Toast ──
 function showToast(msg, type = "success") {
   const el = document.getElementById("toast");
-  el.textContent = (type === "success" ? "✅ " : "❌ ") + msg;
+  el.textContent = (type === "success" ? "✅ " : (type === "warn" ? "⚠️ " : "❌ ")) + msg;
   el.className = "show " + type;
   clearTimeout(el._timer);
   el._timer = setTimeout(() => { el.className = ""; }, 3000);
@@ -1042,6 +1276,21 @@ async function submitRecord() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> 正在送出紀錄…';
 
+  // 離線模擬模式的寫入處理
+  if (isDemoMode) {
+    setTimeout(() => {
+      const newRec = { date, recorder, name, desc, note };
+      allRecords.unshift(newRec); // 新資料放在首位
+      localStorage.setItem("local_records_data", JSON.stringify(allRecords));
+      showToast("模擬紀錄新增成功（本機暫存）！");
+      resetForm();
+      btn.disabled = false;
+      btn.innerHTML = '<span>📤</span> 送出紀錄';
+    }, 400);
+    return;
+  }
+
+  // 正式的雲端寫入處理
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
@@ -1058,8 +1307,9 @@ async function submitRecord() {
       showToast(data.message || "送出失敗，請重試", "error");
     }
   } catch (e) {
-    showToast("同步失敗，請確認您的網路連線或稍後再試", "error");
-    console.error(e);
+    showToast("同步失敗，已轉入本地暫存模擬模式", "error");
+    // 降級處理
+    enableDemoMode();
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<span>📤</span> 送出紀錄';
@@ -1082,6 +1332,15 @@ async function loadRecords() {
   const list = document.getElementById("records-list");
   list.innerHTML = `<div class="state-box"><div class="state-icon">⏳</div><p>紀錄讀取中…</p></div>`;
 
+  if (isDemoMode) {
+    setTimeout(() => {
+      loadLocalRecords();
+      btn.classList.remove("spinning");
+      showToast("本機模擬數據載入完畢");
+    }, 400);
+    return;
+  }
+
   try {
     const res = await fetch(`${GAS_URL}?action=getRecords`, {
       method: "GET",
@@ -1096,10 +1355,10 @@ async function loadRecords() {
     list.innerHTML = `
       <div class="state-box">
         <div class="state-icon">❌</div>
-        <p>讀取失敗，請確認網路連線並重新整理頁面。</p>
+        <p>無法讀取雲端。已為您切換至離線預覽模式。</p>
       </div>
     `;
-    showToast("無法載入雲端數據", "error");
+    enableDemoMode();
   } finally {
     btn.classList.remove("spinning");
   }
@@ -1124,6 +1383,7 @@ function filterRecords() {
 // ── 渲染單頁歷史紀錄 ──
 function renderPage() {
   const list = document.getElementById("records-list");
+  if (!list) return;
   const total = filteredRecords.length;
 
   if (total === 0) {
@@ -1192,6 +1452,7 @@ function renderPage() {
   }).join("");
 
   const pag = document.getElementById("pagination");
+  if (!pag) return;
   if (totalPages <= 1) { pag.innerHTML = ""; return; }
 
   let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?"disabled":""}>‹ 上頁</button>`;
